@@ -1,7 +1,6 @@
 package com.ferregestion.service;
 
 import com.ferregestion.entity.Credito;
-import com.ferregestion.exception.ResourceNotFoundException;
 import com.ferregestion.repository.CreditoRepository;
 import org.springframework.stereotype.Service;
 
@@ -20,27 +19,29 @@ public class CreditoService {
         return creditoRepository.findAll();
     }
 
-    public Credito buscarPorId(Integer idCredito) {
-        return creditoRepository.findById(idCredito)
-                .orElseThrow(() -> new ResourceNotFoundException("Crédito con ID " + idCredito + " no encontrado"));
+    public Credito buscarPorId(Integer id) {
+        return creditoRepository.findById(id).orElse(null);
     }
 
     public Credito guardar(Credito credito) {
         return creditoRepository.save(credito);
     }
 
-    public Credito actualizar(Integer idCredito, Credito creditoActualizado) {
-        Credito creditoExistente = buscarPorId(idCredito);
-        creditoExistente.setCliente(creditoActualizado.getCliente());
-        creditoExistente.setValor(creditoActualizado.getValor());
-        creditoExistente.setFechaInicio(creditoActualizado.getFechaInicio());
-        creditoExistente.setFechaVencimiento(creditoActualizado.getFechaVencimiento());
-        creditoExistente.setEstado(creditoActualizado.getEstado());
-        return creditoRepository.save(creditoExistente);
+    public Credito actualizar(Integer id, Credito creditoActualizado) {
+        return creditoRepository.findById(id)
+                .map(credito -> {
+                    credito.setVenta(creditoActualizado.getVenta()); // CAMBIO: setIdVenta → setVenta
+                    credito.setCliente(creditoActualizado.getCliente());
+                    credito.setNombre(creditoActualizado.getNombre());
+                    credito.setMontoTotal(creditoActualizado.getMontoTotal());
+                    credito.setSaldoPendiente(creditoActualizado.getSaldoPendiente());
+                    credito.setEstado(creditoActualizado.getEstado());
+                    return creditoRepository.save(credito);
+                })
+                .orElse(null);
     }
 
-    public void eliminar(Integer idCredito) {
-        Credito credito = buscarPorId(idCredito);
-        creditoRepository.delete(credito);
+    public void eliminar(Integer id) {
+        creditoRepository.deleteById(id);
     }
 }

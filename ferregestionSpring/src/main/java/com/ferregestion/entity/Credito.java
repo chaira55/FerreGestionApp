@@ -4,8 +4,6 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
-import java.time.LocalDate;
-
 @Entity
 @Table(name = "credito")
 @Data
@@ -16,25 +14,28 @@ public class Credito {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id_credito")
     private Integer idCredito;
 
-    @NotNull(message = "El cliente es obligatorio")
+    @NotNull
+    @OneToOne  // CAMBIO: De Integer a relación OneToOne
+    @JoinColumn(name = "id_venta", nullable = false, unique = true)
+    private Venta venta;
+
+    @NotNull
     @ManyToOne
-    @JoinColumn(name = "cedula_cliente", nullable = false)
+    @JoinColumn(name = "cedula", nullable = false)
     private Cliente cliente;
 
-    @NotNull(message = "El valor es obligatorio")
-    @Column(name = "valor", nullable = false)
-    private Double valor;
+    @Column(name = "nombre", length = 100)
+    private String nombre;
 
-    @NotNull(message = "La fecha de inicio es obligatoria")
-    @Column(name = "fecha_inicio", nullable = false)
-    private LocalDate fechaInicio;
+    @Column(name = "monto_total", nullable = false, precision = 12, scale = 2)
+    private Double montoTotal;
 
-    @NotNull(message = "La fecha de vencimiento es obligatoria")
-    @Column(name = "fecha_vencimiento", nullable = false)
-    private LocalDate fechaVencimiento;
+    @Column(name = "saldo_pendiente", nullable = false, precision = 12, scale = 2)
+    private Double saldoPendiente;
 
-    @Column(name = "estado", length = 20)
-    private String estado; // ej: ACTIVO, PAGADO, VENCIDO
+    @Column(name = "estado", length = 50)
+    private String estado;
 }

@@ -20,24 +20,24 @@ public class ClaseService {
         return claseRepository.findAll();
     }
 
-    public Clase buscarPorId(Integer idClase) {
-        return claseRepository.findById(idClase)
-                .orElseThrow(() -> new ResourceNotFoundException("Clase con ID " + idClase + " no encontrada"));
+    public Clase buscarPorId(String codigoClase) {  // CAMBIO: Integer → String
+        return claseRepository.findById(codigoClase)
+                .orElseThrow(() -> new ResourceNotFoundException("Clase con código " + codigoClase + " no encontrada"));
     }
 
     public Clase guardar(Clase clase) {
         return claseRepository.save(clase);
     }
 
-    public Clase actualizar(Integer idClase, Clase claseActualizada) {
-        Clase claseExistente = buscarPorId(idClase);
+    public Clase actualizar(String codigoClase, Clase claseActualizada) {  // CAMBIO: Integer → String
+        Clase claseExistente = buscarPorId(codigoClase);
         claseExistente.setNombre(claseActualizada.getNombre());
-        claseExistente.setDescripcion(claseActualizada.getDescripcion());
+        // ELIMINADO: setDescripcion
         return claseRepository.save(claseExistente);
     }
 
-    public void eliminar(Integer idClase) {
-        Clase clase = buscarPorId(idClase);
+    public void eliminar(String codigoClase) {  // CAMBIO: Integer → String
+        Clase clase = buscarPorId(codigoClase);
         claseRepository.delete(clase);
     }
 }

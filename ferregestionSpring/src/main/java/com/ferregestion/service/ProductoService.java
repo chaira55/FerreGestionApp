@@ -1,7 +1,6 @@
 package com.ferregestion.service;
 
 import com.ferregestion.entity.Producto;
-import com.ferregestion.exception.DuplicateResourceException;
 import com.ferregestion.exception.ResourceNotFoundException;
 import com.ferregestion.repository.ProductoRepository;
 import org.springframework.stereotype.Service;
@@ -27,17 +26,30 @@ public class ProductoService {
     }
 
     public Producto guardar(Producto producto) {
-        if (productoRepository.existsByNombre(producto.getNombre())) {
-            throw new DuplicateResourceException("Ya existe un producto con el nombre " + producto.getNombre());
+        // Asegurar valores por defecto
+        if (producto.getIva() == null) {
+            producto.setIva(19.00);
+        }
+        if (producto.getPrecioCompra() == null) {
+            producto.setPrecioCompra(0.00);
+        }
+        if (producto.getPrecioVenta() == null) {
+            producto.setPrecioVenta(0.00);
+        }
+        if (producto.getStock() == null) {
+            producto.setStock(0);
         }
         return productoRepository.save(producto);
     }
 
     public Producto actualizar(Integer id, Producto actualizado) {
         Producto p = buscarPorId(id);
-        p.setNombre(actualizado.getNombre());
-        p.setDescripcion(actualizado.getDescripcion());
-        p.setPrecio(actualizado.getPrecio());
+        p.setDescripcion(actualizado.getDescripcion());  // CAMBIO: nombre → descripcion
+        p.setClase(actualizado.getClase());  // NUEVO
+        p.setGrupo(actualizado.getGrupo());  // NUEVO
+        p.setIva(actualizado.getIva());  // NUEVO
+        p.setPrecioCompra(actualizado.getPrecioCompra());  // NUEVO
+        p.setPrecioVenta(actualizado.getPrecioVenta());  // CAMBIO: precio → precioVenta
         p.setStock(actualizado.getStock());
         return productoRepository.save(p);
     }
@@ -48,13 +60,13 @@ public class ProductoService {
     }
 
     /**
-     * Reduce el stock del producto en la cantidad indicada. Lanza InsufficientStockException si no alcanza.
+     * Reduce el stock del producto en la cantidad indicada.
      */
     public void reducirStock(Integer productoId, int cantidad) {
         Producto p = buscarPorId(productoId);
         if (p.getStock() < cantidad) {
             throw new com.ferregestion.exception.InsufficientStockException(
-                    "Stock insuficiente para el producto " + p.getNombre() + ". Disponible: " + p.getStock());
+                    "Stock insuficiente para el producto " + p.getDescripcion() + ". Disponible: " + p.getStock());
         }
         p.setStock(p.getStock() - cantidad);
         productoRepository.save(p);

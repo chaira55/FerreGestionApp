@@ -20,25 +20,30 @@ public class GrupoService {
         return grupoRepository.findAll();
     }
 
-    public Grupo buscarPorId(Integer idGrupo) {
-        return grupoRepository.findById(idGrupo)
-                .orElseThrow(() -> new ResourceNotFoundException("Grupo con ID " + idGrupo + " no encontrado"));
+    public Grupo buscarPorId(String codigoGrupo) {  // CAMBIO: Integer → String
+        return grupoRepository.findById(codigoGrupo)
+                .orElseThrow(() -> new ResourceNotFoundException("Grupo con código " + codigoGrupo + " no encontrado"));
     }
 
     public Grupo guardar(Grupo grupo) {
+        // Asegurar que el IVA tenga valor por defecto si no se proporciona
+        if (grupo.getIva() == null) {
+            grupo.setIva(19.00);
+        }
         return grupoRepository.save(grupo);
     }
 
-    public Grupo actualizar(Integer idGrupo, Grupo grupoActualizado) {
-        Grupo grupoExistente = buscarPorId(idGrupo);
+    public Grupo actualizar(String codigoGrupo, Grupo grupoActualizado) {  // CAMBIO: Integer → String
+        Grupo grupoExistente = buscarPorId(codigoGrupo);
         grupoExistente.setNombre(grupoActualizado.getNombre());
-        grupoExistente.setDescripcion(grupoActualizado.getDescripcion());
-        grupoExistente.setClase(grupoActualizado.getClase());
+        grupoExistente.setIva(grupoActualizado.getIva());  // NUEVO
+        // ELIMINADO: setDescripcion
+        // ELIMINADO: setClase
         return grupoRepository.save(grupoExistente);
     }
 
-    public void eliminar(Integer idGrupo) {
-        Grupo grupo = buscarPorId(idGrupo);
+    public void eliminar(String codigoGrupo) {  // CAMBIO: Integer → String
+        Grupo grupo = buscarPorId(codigoGrupo);
         grupoRepository.delete(grupo);
     }
 }

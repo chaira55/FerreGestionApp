@@ -26,8 +26,9 @@ public class CreditoController {
 
     // Buscar crédito por ID
     @GetMapping("/{id}")
-    public Credito buscarPorId(@PathVariable Integer id) {
-        return creditoService.buscarPorId(id);
+    public ResponseEntity<Credito> buscarPorId(@PathVariable Integer id) {
+        Credito credito = creditoService.buscarPorId(id);
+        return credito != null ? ResponseEntity.ok(credito) : ResponseEntity.notFound().build();
     }
 
     // Crear nuevo crédito
@@ -39,8 +40,9 @@ public class CreditoController {
 
     // Actualizar crédito existente
     @PutMapping("/{id}")
-    public Credito actualizar(@PathVariable Integer id, @RequestBody Credito creditoActualizado) {
-        return creditoService.actualizar(id, creditoActualizado);
+    public ResponseEntity<Credito> actualizar(@PathVariable Integer id, @RequestBody Credito creditoActualizado) {
+        Credito actualizado = creditoService.actualizar(id, creditoActualizado);
+        return actualizado != null ? ResponseEntity.ok(actualizado) : ResponseEntity.notFound().build();
     }
 
     // Eliminar crédito

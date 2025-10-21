@@ -18,35 +18,30 @@ public class GrupoController {
         this.grupoService = grupoService;
     }
 
-    // Listar todos los grupos
     @GetMapping
     public List<Grupo> listarTodos() {
         return grupoService.listarTodos();
     }
 
-    // Buscar grupo por ID
-    @GetMapping("/{id}")
-    public Grupo buscarPorId(@PathVariable Integer id) {
-        return grupoService.buscarPorId(id);
+    @GetMapping("/{codigo}")  // CAMBIO: id → codigo
+    public Grupo buscarPorCodigo(@PathVariable String codigo) {  // CAMBIO: Integer → String
+        return grupoService.buscarPorId(codigo);
     }
 
-    // Crear nuevo grupo
     @PostMapping
     public ResponseEntity<Grupo> crear(@RequestBody Grupo grupo) {
         Grupo nuevoGrupo = grupoService.guardar(grupo);
         return new ResponseEntity<>(nuevoGrupo, HttpStatus.CREATED);
     }
 
-    // Actualizar grupo existente
-    @PutMapping("/{id}")
-    public Grupo actualizar(@PathVariable Integer id, @RequestBody Grupo grupoActualizado) {
-        return grupoService.actualizar(id, grupoActualizado);
+    @PutMapping("/{codigo}")  // CAMBIO: id → codigo
+    public Grupo actualizar(@PathVariable String codigo, @RequestBody Grupo grupoActualizado) {  // CAMBIO: Integer → String
+        return grupoService.actualizar(codigo, grupoActualizado);
     }
 
-    // Eliminar grupo
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> eliminar(@PathVariable Integer id) {
-        grupoService.eliminar(id);
+    @DeleteMapping("/{codigo}")  // CAMBIO: id → codigo
+    public ResponseEntity<Void> eliminar(@PathVariable String codigo) {  // CAMBIO: Integer → String
+        grupoService.eliminar(codigo);
         return ResponseEntity.noContent().build();
     }
 }

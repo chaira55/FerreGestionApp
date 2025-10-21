@@ -5,6 +5,8 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 
+import java.util.List;
+
 @Entity
 @Table(name = "grupo")
 @Data
@@ -14,20 +16,21 @@ import lombok.*;
 public class Grupo {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer idGrupo;
+    @Column(name = "codigo_grupo", length = 20)
+    private String codigoGrupo;  // CAMBIO: PK es String, no Integer autoincremental
 
     @NotBlank(message = "El nombre del grupo es obligatorio")
     @Size(max = 100, message = "El nombre no puede superar los 100 caracteres")
-    @Column(name = "nombre", nullable = false, length = 100)
+    @Column(name = "nombre", nullable = false, unique = true, length = 100)
     private String nombre;
 
-    @Size(max = 250, message = "La descripción no puede superar los 250 caracteres")
-    @Column(name = "descripcion", length = 250)
-    private String descripcion;
+    @Column(name = "iva", precision = 5, scale = 2, columnDefinition = "DECIMAL(5,2) DEFAULT 19.00")
+    private Double iva = 19.00;  // NUEVO: Campo obligatorio con default
 
-    // Relación con Clase
-    @ManyToOne
-    @JoinColumn(name = "id_clase", nullable = false)
-    private Clase clase;
+    // ELIMINADO: descripcion (no existe en la BD)
+    // ELIMINADO: relación con Clase (no existe en la BD)
+
+    // Relación con Producto
+    @OneToMany(mappedBy = "grupo", cascade = CascadeType.ALL)
+    private List<Producto> productos;
 }

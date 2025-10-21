@@ -44,6 +44,7 @@ public class CotizacionService {
 
         cotizacionExistente.setFecha(cotizacionActualizada.getFecha());
         cotizacionExistente.setTotal(cotizacionActualizada.getTotal());
+        cotizacionExistente.setNombre(cotizacionActualizada.getNombre());  // NUEVO
 
         // Validar cliente actualizado si cambia
         if (cotizacionActualizada.getCliente() != null) {

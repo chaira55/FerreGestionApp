@@ -48,6 +48,9 @@ public class VentaService {
 
         ventaExistente.setFecha(ventaActualizada.getFecha());
         ventaExistente.setTotal(ventaActualizada.getTotal());
+        ventaExistente.setNombre(ventaActualizada.getNombre());  // NUEVO
+        ventaExistente.setTipoPago(ventaActualizada.getTipoPago());  // NUEVO
+        ventaExistente.setCotizacion(ventaActualizada.getCotizacion());  // NUEVO
 
         if (ventaActualizada.getCliente() != null) {
             Cliente cliente = clienteRepository.findById(ventaActualizada.getCliente().getCedula())

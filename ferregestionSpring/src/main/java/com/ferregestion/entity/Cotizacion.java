@@ -23,18 +23,22 @@ public class Cotizacion {
     @Column(name = "id_cotizacion")
     private Integer idCotizacion;
 
+    @NotNull
+    @ManyToOne
+    @JoinColumn(name = "cedula", nullable = false)
+    private Cliente cliente;
+
+    @Column(name = "nombre", length = 100)  // NUEVO
+    private String nombre;
+
     @NotNull(message = "La fecha de cotización es obligatoria")
     @Column(name = "fecha", nullable = false)
     private LocalDate fecha;
 
-    @ManyToOne
-    @JoinColumn(name = "cedula_cliente", nullable = false)
-    private Cliente cliente;
+    @NotNull(message = "El total de la cotización es obligatorio")
+    @Column(name = "total", nullable = false, precision = 12, scale = 2)
+    private Double total;
 
     @OneToMany(mappedBy = "cotizacion", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<DetalleCotizacion> detalles;
-
-    @NotNull(message = "El total de la cotización es obligatorio")
-    @Column(name = "total", nullable = false)
-    private Double total;
 }

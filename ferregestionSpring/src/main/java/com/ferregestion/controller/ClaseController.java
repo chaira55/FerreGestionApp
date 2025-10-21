@@ -18,35 +18,30 @@ public class ClaseController {
         this.claseService = claseService;
     }
 
-    // Listar todas las clases
     @GetMapping
     public List<Clase> listarTodas() {
         return claseService.listarTodos();
     }
 
-    // Buscar clase por ID
-    @GetMapping("/{id}")
-    public Clase buscarPorId(@PathVariable Integer id) {
-        return claseService.buscarPorId(id);
+    @GetMapping("/{codigo}")  // CAMBIO: id → codigo
+    public Clase buscarPorCodigo(@PathVariable String codigo) {  // CAMBIO: Integer → String
+        return claseService.buscarPorId(codigo);
     }
 
-    // Crear nueva clase
     @PostMapping
     public ResponseEntity<Clase> crear(@RequestBody Clase clase) {
         Clase nuevaClase = claseService.guardar(clase);
         return new ResponseEntity<>(nuevaClase, HttpStatus.CREATED);
     }
 
-    // Actualizar clase existente
-    @PutMapping("/{id}")
-    public Clase actualizar(@PathVariable Integer id, @RequestBody Clase claseActualizada) {
-        return claseService.actualizar(id, claseActualizada);
+    @PutMapping("/{codigo}")  // CAMBIO: id → codigo
+    public Clase actualizar(@PathVariable String codigo, @RequestBody Clase claseActualizada) {  // CAMBIO: Integer → String
+        return claseService.actualizar(codigo, claseActualizada);
     }
 
-    // Eliminar clase
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> eliminar(@PathVariable Integer id) {
-        claseService.eliminar(id);
+    @DeleteMapping("/{codigo}")  // CAMBIO: id → codigo
+    public ResponseEntity<Void> eliminar(@PathVariable String codigo) {  // CAMBIO: Integer → String
+        claseService.eliminar(codigo);
         return ResponseEntity.noContent().build();
     }
 }

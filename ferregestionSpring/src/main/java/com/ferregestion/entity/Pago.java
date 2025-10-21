@@ -18,15 +18,15 @@ public class Pago {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer idPago;
 
-    @NotNull(message = "El cliente es obligatorio")
-    @ManyToOne
-    @JoinColumn(name = "cedula_cliente", nullable = false)
-    private Cliente cliente;
-
     @NotNull(message = "El crédito es obligatorio")
     @ManyToOne
     @JoinColumn(name = "id_credito", nullable = false)
     private Credito credito;
+
+    @NotNull(message = "El cliente es obligatorio")
+    @ManyToOne
+    @JoinColumn(name = "cedula", nullable = false)
+    private Cliente cliente;
 
     @NotNull(message = "El valor es obligatorio")
     @Column(name = "valor", nullable = false)
