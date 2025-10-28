@@ -61,16 +61,6 @@ public class ProductoController {
         return ResponseEntity.ok(productoService.buscarPorDescripcion(descripcion, page, size));
     }
 
-    @Operation(summary = "Filtrar productos por clase")
-    @GetMapping("/clase/{codigoClase}")
-    public ResponseEntity<Page<ProductoResponseDTO>> filtrarPorClase(
-            @PathVariable String codigoClase,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-
-        return ResponseEntity.ok(productoService.filtrarPorClase(codigoClase, page, size));
-    }
-
     @Operation(summary = "Filtrar productos por grupo")
     @GetMapping("/grupo/{codigoGrupo}")
     public ResponseEntity<Page<ProductoResponseDTO>> filtrarPorGrupo(
@@ -79,17 +69,6 @@ public class ProductoController {
             @RequestParam(defaultValue = "10") int size) {
 
         return ResponseEntity.ok(productoService.filtrarPorGrupo(codigoGrupo, page, size));
-    }
-
-    @Operation(summary = "Filtrar productos por rango de precio")
-    @GetMapping("/precio")
-    public ResponseEntity<Page<ProductoResponseDTO>> filtrarPorPrecio(
-            @RequestParam BigDecimal min,
-            @RequestParam BigDecimal max,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-
-        return ResponseEntity.ok(productoService.filtrarPorRangoPrecio(min, max, page, size));
     }
 
     @Operation(summary = "Listar productos con stock bajo")

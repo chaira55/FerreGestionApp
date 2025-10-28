@@ -1,10 +1,10 @@
 package com.ferregestion.entity;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotNull;
-import lombok.*;
-import com.fasterxml.jackson.annotation.JsonIgnore;  // NUEVO IMPORT
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 
@@ -21,30 +21,19 @@ public class DetalleVenta {
     @Column(name = "id_detalle_venta")
     private Integer idDetalleVenta;
 
-    @NotNull
     @ManyToOne
-    @JoinColumn(name = "id_venta", nullable = false)
-    @JsonIgnore  // NUEVO: Ignora para evitar ciclo infinito
+    @JoinColumn(name = "id_venta")
     private Venta venta;
 
-    @NotNull
     @ManyToOne
-    @JoinColumn(name = "id_producto", nullable = false)
+    @JoinColumn(name = "id_producto")
     private Producto producto;
 
-    @Column(name = "descripcion_producto", length = 200)
-    private String descripcionProducto;
+    private Integer cantidad;
 
-    @NotNull(message = "La cantidad es obligatoria")
-    @Min(value = 1, message = "La cantidad debe ser al menos 1")
-    @Column(name = "cantidad", nullable = false)
-    private Integer cantidad = 1;
-
-    @NotNull(message = "El precio unitario es obligatorio")
-    @Column(name = "precio_unitario", nullable = false, precision = 10, scale = 2)
+    @Column(name = "precio_unitario", precision = 10, scale = 2)
     private BigDecimal precioUnitario;
 
-    @NotNull(message = "El subtotal es obligatorio")
-    @Column(name = "subtotal", nullable = false, precision = 12, scale = 2)
+    @Column(precision = 10, scale = 2)
     private BigDecimal subtotal;
 }

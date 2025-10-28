@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/head :: head('Detalle Venta - FerreGestión')"></head>
+<body>
+<div th:replace="fragments/navbar :: navbar"></div>
+
+<div class="container mt-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a th:href="@{/}">Inicio</a></li>
+            <li class="breadcrumb-item"><a th:href="@{/web/ventas}">Ventas</a></li>
+            <li class="breadcrumb-item active">Detalle</li>
+        </ol>
+    </nav>
+
+    <!-- Título y acciones -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1>
+                <i class="bi bi-receipt"></i>
+                Detalle de Venta <span class="badge bg-primary" th:text="'#' + ${venta.idVenta}">#1</span>
+            </h1>
+        </div>
+        <div class="col-md-4 text-end">
+            <button onclick="window.print()" class="btn btn-secondary">
+                <i class="bi bi-printer"></i> Imprimir
+            </button>
+            <a th:href="@{/web/ventas}" class="btn btn-primary">
+                <i class="bi bi-arrow-left"></i> Volver
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Información de la venta -->
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-info-circle"></i> Información de la Venta
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless">
+                        <tr>
+                            <th width="40%">ID Venta:</th>
+                            <td><strong th:text="'#' + ${venta.idVenta}">#1</strong></td>
+                        </tr>
+                        <tr>
+                            <th>Fecha:</th>
+                            <td th:text="${#temporals.format(venta.fecha, 'dd/MM/yyyy')}">21/10/2025</td>
+                        </tr>
+                        <tr>
+                            <th>Cliente:</th>
+                            <td>
+                                <i class="bi bi-person"></i>
+                                <span th:text="${venta.nombre}">Juan Pérez</span><br>
+                                <small class="text-muted">
+                                    CC: <span th:text="${venta.cliente.cedula}">123456789</span>
+                                </small>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Tipo de Pago:</th>
+                            <td>
+                                    <span th:if="${venta.tipoPago == 'EFECTIVO'}" class="badge bg-success">
+                                        <i class="bi bi-cash"></i>
+                                        <i class="bi bi-cash"></i> Efectivo
+                                    </span>
+                                <span th:if="${venta.tipoPago == 'TARJETA'}" class="badge bg-info">
+                                        <i class="bi bi-credit-card"></i> Tarjeta
+                                    </span>
+                                <span th:if="${venta.tipoPago == 'CREDITO'}" class="badge bg-warning text-dark">
+                                        <i class="bi bi-clock"></i> Crédito
+                                    </span>
+                                <span th:if="${venta.tipoPago == 'TRANSFERENCIA'}" class="badge bg-primary">
+                                        <i class="bi bi-arrow-left-right"></i> Transferencia
+                                    </span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Cotización:</th>
+                            <td>
+                                <span th:if="${venta.idCotizacion != null}" th:text="'#' + ${venta.idCotizacion}">#2</span>
+                                <span th:unless="${venta.idCotizacion != null}" class="text-muted">Sin cotización</span>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Total -->
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-cash-stack"></i> Total
+                    </h5>
+                </div>
+                <div class="card-body text-center">
+                    <h1 class="display-3 text-success"
+                        th:text="${'$' + #numbers.formatDecimal(venta.total, 0, 'COMMA', 0, 'POINT')}">
+                        $195,000
+                    </h1>
+                    <p class="text-muted mb-0">Total de la venta</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Detalles de productos -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-box"></i> Productos
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                            <tr>
+                                <th>Producto</th>
+                                <th class="text-center">Cant.</th>
+                                <th class="text-end">Precio</th>
+                                <th class="text-end">Subtotal</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="detalle : ${venta.detalles}">
+                                <td th:text="${detalle.descripcionProducto}">
+                                    Tornillo acero 1/4
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-secondary" th:text="${detalle.cantidad}">100</span>
+                                </td>
+                                <td class="text-end"
+                                    th:text="${'$' + #numbers.formatDecimal(detalle.precioUnitario, 0, 'COMMA', 0, 'POINT')}">
+                                    $750
+                                </td>
+                                <td class="text-end">
+                                    <strong th:text="${'$' + #numbers.formatDecimal(detalle.subtotal, 0, 'COMMA', 0, 'POINT')}">
+                                        $75,000
+                                    </strong>
+                                </td>
+                            </tr>
+                            </tbody>
+                            <tfoot>
+                            <tr class="table-light">
+                                <td colspan="3" class="text-end"><strong>TOTAL:</strong></td>
+                                <td class="text-end">
+                                    <h5 class="text-success mb-0"
+                                        th:text="${'$' + #numbers.formatDecimal(venta.total, 0, 'COMMA', 0, 'POINT')}">
+                                        $195,000
+                                    </h5>
+                                </td>
+                            </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Información adicional -->
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-info-circle"></i> Información Adicional
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <p>
+                                <strong>Cantidad de productos:</strong><br>
+                                <span th:text="${venta.detalles.size()} + ' productos diferentes'">3 productos diferentes</span>
+                            </p>
+                        </div>
+                        <div class="col-md-4">
+                            <p>
+                                <strong>Total de unidades:</strong><br>
+                                <span th:text="${#aggregates.sum(venta.detalles.![cantidad])} + ' unidades'">250 unidades</span>
+                            </p>
+                        </div>
+                        <div class="col-md-4">
+                            <p>
+                                <strong>Promedio por producto:</strong><br>
+                                <span th:text="${'$' + #numbers.formatDecimal(venta.total / venta.detalles.size(), 0, 'COMMA', 0, 'POINT')}">
+                                        $65,000
+                                    </span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div th:replace="fragments/footer :: footer"></div>
+<div th:replace="fragments/footer :: scripts"></div>
+
+<style>
+    @media print {
+        .navbar, .breadcrumb, .btn, footer {
+            display: none !important;
+        }
+        .card {
+            border: 1px solid #000 !important;
+            page-break-inside: avoid;
+        }
+    }
+</style>
+</body>
+</html>

@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/head :: head('FerreGestión - Dashboard')"></head>
+<body>
+<div th:replace="fragments/navbar :: navbar"></div>
+
+<div class="container mt-4">
+    <!-- Título -->
+    <div class="row mb-4">
+        <div class="col">
+            <h1><i class="bi bi-speedometer2"></i> Dashboard</h1>
+            <p class="text-muted">Resumen general del sistema</p>
+        </div>
+    </div>
+
+    <!-- Tarjetas de resumen -->
+    <div class="row g-3 mb-4">
+        <!-- Total Clientes -->
+        <div class="col-md-3">
+            <div class="card text-white bg-primary">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title text-uppercase">Clientes</h6>
+                            <h2 class="mb-0" th:text="${totalClientes}">0</h2>
+                        </div>
+                        <i class="bi bi-people fs-1"></i>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <a th:href="@{/web/clientes}" class="text-white text-decoration-none">
+                        Ver todos <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Productos -->
+        <div class="col-md-3">
+            <div class="card text-white bg-success">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title text-uppercase">Productos</h6>
+                            <h2 class="mb-0" th:text="${totalProductos}">0</h2>
+                        </div>
+                        <i class="bi bi-box fs-1"></i>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <a th:href="@{/web/productos}" class="text-white text-decoration-none">
+                        Ver todos <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ventas del mes -->
+        <div class="col-md-3">
+            <div class="card text-white bg-warning">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title text-uppercase">Ventas Mes</h6>
+                            <h2 class="mb-0" th:text="${'$' + #numbers.formatDecimal(totalVentasMes, 0, 'COMMA', 0, 'POINT')}">$0</h2>
+                        </div>
+                        <i class="bi bi-cart fs-1"></i>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <a th:href="@{/web/ventas}" class="text-white text-decoration-none">
+                        Ver todas <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Créditos pendientes -->
+        <div class="col-md-3">
+            <div class="card text-white bg-danger">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title text-uppercase">Créditos</h6>
+                            <h2 class="mb-0" th:text="${totalCreditosActivos}">0</h2>
+                        </div>
+                        <i class="bi bi-credit-card fs-1"></i>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <a th:href="@{/web/creditos}" class="text-white text-decoration-none">
+                        Ver todos <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Accesos rápidos -->
+    <div class="row mb-4">
+        <div class="col">
+            <h3><i class="bi bi-lightning"></i> Accesos Rápidos</h3>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <i class="bi bi-cart-plus fs-1 text-primary"></i>
+                    <h5 class="card-title mt-3">Nueva Venta</h5>
+                    <p class="card-text">Registrar una nueva venta</p>
+                    <a th:href="@{/web/ventas/nueva}" class="btn btn-primary">
+                        <i class="bi bi-plus-circle"></i> Crear
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <i class="bi bi-file-text fs-1 text-success"></i>
+                    <h5 class="card-title mt-3">Nueva Cotización</h5>
+                    <p class="card-text">Generar una cotización</p>
+                    <a th:href="@{/web/cotizaciones/nueva}" class="btn btn-success">
+                        <i class="bi bi-plus-circle"></i> Crear
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <i class="bi bi-person-plus fs-1 text-info"></i>
+                    <h5 class="card-title mt-3">Nuevo Cliente</h5>
+                    <p class="card-text">Registrar un cliente</p>
+                    <a th:href="@{/web/clientes/nuevo}" class="btn btn-info text-white">
+                        <i class="bi bi-plus-circle"></i> Crear
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <i class="bi bi-box-seam fs-1 text-warning"></i>
+                    <h5 class="card-title mt-3">Nuevo Producto</h5>
+                    <p class="card-text">Agregar un producto</p>
+                    <a th:href="@{/web/productos/nuevo}" class="btn btn-warning text-white">
+                        <i class="bi bi-plus-circle"></i> Crear
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gestión de Categorías - SOLO GRUPOS -->
+    <div class="row mb-4">
+        <div class="col">
+            <h3><i class="bi bi-gear"></i> Gestión de Categorías</h3>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-12">
+            <div class="card border-info">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="card-title">
+                                <i class="bi bi-folder text-info"></i> Grupos de Productos
+                            </h5>
+                            <p class="card-text text-muted mb-0">
+                                Categorías de productos con configuración de IVA
+                            </p>
+                        </div>
+                        <div>
+                            <a th:href="@{/web/grupos}" class="btn btn-info text-white">
+                                <i class="bi bi-list"></i> Ver Grupos
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Productos con stock bajo -->
+    <div class="row mb-4" th:if="${productosStockBajo != null && !productosStockBajo.empty}">
+        <div class="col">
+            <h3><i class="bi bi-exclamation-triangle text-warning"></i> Productos con Stock Bajo</h3>
+        </div>
+    </div>
+
+    <div class="row" th:if="${productosStockBajo != null && !productosStockBajo.empty}">
+        <div class="col">
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Descripción</th>
+                                <th>Grupo</th>
+                                <th>Stock</th>
+                                <th>Precio</th>
+                                <th>Acciones</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="producto : ${productosStockBajo}">
+                                <td th:text="${producto.idProducto}">1</td>
+                                <td th:text="${producto.descripcion}">Producto</td>
+                                <td>
+                                            <span th:if="${producto.grupo != null}"
+                                                  th:text="${producto.grupo.nombre}"
+                                                  class="badge bg-info text-dark">
+                                                Grupo
+                                            </span>
+                                    <span th:unless="${producto.grupo != null}" class="text-muted">N/A</span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-warning" th:text="${producto.stock}">10</span>
+                                </td>
+                                <td th:text="${'$' + #numbers.formatDecimal(producto.precioVenta, 0, 'COMMA', 0, 'POINT')}">$1000</td>
+                                <td>
+                                    <a th:href="@{/web/productos/editar/{id}(id=${producto.idProducto})}"
+                                       class="btn btn-sm btn-warning">
+                                        <i class="bi bi-pencil"></i> Editar
+                                    </a>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div th:replace="fragments/footer :: footer"></div>
+<div th:replace="fragments/footer :: scripts"></div>
+</body>
+</html>

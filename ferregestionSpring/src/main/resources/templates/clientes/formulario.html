@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/head :: head(${accion} + ' Cliente - FerreGestión')"></head>
+<body>
+<div th:replace="fragments/navbar :: navbar"></div>
+
+<div class="container mt-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a th:href="@{/}">Inicio</a></li>
+            <li class="breadcrumb-item"><a th:href="@{/web/clientes}">Clientes</a></li>
+            <li class="breadcrumb-item active" th:text="${accion}">Nuevo</li>
+        </ol>
+    </nav>
+
+    <!-- Título -->
+    <div class="row mb-4">
+        <div class="col">
+            <h1>
+                <i class="bi bi-person-plus" th:if="${accion == 'Nuevo'}"></i>
+                <i class="bi bi-pencil" th:if="${accion == 'Editar'}"></i>
+                <span th:text="${accion}">Nuevo</span> Cliente
+            </h1>
+        </div>
+    </div>
+
+    <!-- Mensaje de error -->
+    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle"></i>
+        <span th:text="${error}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <!-- Formulario -->
+    <div class="card">
+        <div class="card-body">
+            <form th:action="${accion == 'Nuevo'} ? @{/web/clientes/guardar} : @{/web/clientes/actualizar/{cedula}(cedula=${cliente.cedula})}"
+                  th:object="${cliente}"
+                  method="post"
+                  class="needs-validation"
+                  novalidate>
+
+                <div class="row">
+                    <!-- Cédula -->
+                    <div class="col-md-6 mb-3">
+                        <label for="cedula" class="form-label">
+                            Cédula <span class="text-danger">*</span>
+                        </label>
+                        <input type="number"
+                               class="form-control"
+                               id="cedula"
+                               th:field="*{cedula}"
+                               th:readonly="${accion == 'Editar'}"
+                               required>
+                        <div class="invalid-feedback">
+                            La cédula es obligatoria
+                        </div>
+                        <div th:if="${#fields.hasErrors('cedula')}" class="text-danger">
+                            <small th:errors="*{cedula}"></small>
+                        </div>
+                    </div>
+
+                    <!-- Nombre -->
+                    <div class="col-md-6 mb-3">
+                        <label for="nombre" class="form-label">
+                            Nombre Completo <span class="text-danger">*</span>
+                        </label>
+                        <input type="text"
+                               class="form-control"
+                               id="nombre"
+                               th:field="*{nombre}"
+                               maxlength="100"
+                               required>
+                        <div class="invalid-feedback">
+                            El nombre es obligatorio
+                        </div>
+                        <div th:if="${#fields.hasErrors('nombre')}" class="text-danger">
+                            <small th:errors="*{nombre}"></small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <!-- Celular -->
+                    <div class="col-md-6 mb-3">
+                        <label for="celular" class="form-label">
+                            <i class="bi bi-phone"></i> Celular
+                        </label>
+                        <input type="text"
+                               class="form-control"
+                               id="celular"
+                               th:field="*{celular}"
+                               maxlength="15"
+                               placeholder="3001234567">
+                        <div th:if="${#fields.hasErrors('celular')}" class="text-danger">
+                            <small th:errors="*{celular}"></small>
+                        </div>
+                    </div>
+
+                    <!-- Correo -->
+                    <div class="col-md-6 mb-3">
+                        <label for="correo" class="form-label">
+                            <i class="bi bi-envelope"></i> Correo Electrónico
+                        </label>
+                        <input type="email"
+                               class="form-control"
+                               id="correo"
+                               th:field="*{correo}"
+                               placeholder="ejemplo@correo.com">
+                        <div th:if="${#fields.hasErrors('correo')}" class="text-danger">
+                            <small th:errors="*{correo}"></small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <!-- Dirección -->
+                    <div class="col-md-12 mb-3">
+                        <label for="direccion" class="form-label">
+                            <i class="bi bi-geo-alt"></i> Dirección
+                        </label>
+                        <textarea class="form-control"
+                                  id="direccion"
+                                  th:field="*{direccion}"
+                                  rows="2"
+                                  maxlength="200"
+                                  placeholder="Calle 123 #45-67"></textarea>
+                        <div th:if="${#fields.hasErrors('direccion')}" class="text-danger">
+                            <small th:errors="*{direccion}"></small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Botones -->
+                <div class="row mt-4">
+                    <div class="col">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save"></i> Guardar
+                        </button>
+                        <a th:href="@{/web/clientes}" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Cancelar
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div th:replace="fragments/footer :: footer"></div>
+<div th:replace="fragments/footer :: scripts"></div>
+</body>
+</html>

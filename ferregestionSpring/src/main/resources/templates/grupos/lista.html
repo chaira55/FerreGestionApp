@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/head :: head('Grupos - FerreGestión')"></head>
+<body>
+<div th:replace="fragments/navbar :: navbar"></div>
+
+<div class="container mt-4">
+    <!-- Título y botón nuevo -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <h1><i class="bi bi-folder"></i> Grupos de Productos</h1>
+            <p class="text-muted">Subcategorías de productos con IVA</p>
+        </div>
+        <div class="col-md-6 text-end">
+            <a th:href="@{/web/grupos/nuevo}" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Nuevo Grupo
+            </a>
+        </div>
+    </div>
+
+    <!-- Mensajes de alerta -->
+    <div th:if="${mensaje}"
+         th:class="'alert alert-' + ${tipoMensaje} + ' alert-dismissible fade show'"
+         role="alert">
+        <span th:text="${mensaje}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <!-- Buscador -->
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <div class="input-group">
+                    <span class="input-group-text">
+                        <i class="bi bi-search"></i>
+                    </span>
+                <input type="text"
+                       id="buscarGrupo"
+                       class="form-control"
+                       placeholder="Buscar por código o nombre...">
+            </div>
+        </div>
+        <div class="col-md-6 text-end">
+                <span class="badge bg-info text-dark fs-6">
+                    Total: <span th:text="${grupos.size()}">0</span> grupos
+                </span>
+        </div>
+    </div>
+
+    <!-- Tabla de grupos -->
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover" id="tablaGrupos">
+                    <thead class="table-light">
+                    <tr>
+                        <th>Código</th>
+                        <th>Nombre</th>
+                        <th>IVA (%)</th>
+                        <th class="text-center">Acciones</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="grupo : ${grupos}">
+                        <td>
+                            <code th:text="${grupo.codigoGrupo}">GR001</code>
+                        </td>
+                        <td th:text="${grupo.nombre}">Herramientas Manuales</td>
+                        <td>
+                                    <span class="badge bg-info text-dark" th:text="${grupo.iva} + '%'">
+                                        19%
+                                    </span>
+                        </td>
+                        <td class="text-center">
+                            <div class="btn-group" role="group">
+                                <a th:href="@{/web/grupos/editar/{codigo}(codigo=${grupo.codigoGrupo})}"
+                                   class="btn btn-sm btn-warning"
+                                   title="Editar">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <a th:href="@{/web/grupos/eliminar/{codigo}(codigo=${grupo.codigoGrupo})}"
+                                   class="btn btn-sm btn-danger"
+                                   onclick="return confirm('¿Está seguro de eliminar este grupo?')"
+                                   title="Eliminar">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Mensaje si no hay grupos -->
+            <div th:if="${grupos.empty}" class="text-center py-5">
+                <i class="bi bi-inbox fs-1 text-muted"></i>
+                <p class="text-muted mt-3">No hay grupos registrados</p>
+                <a th:href="@{/web/grupos/nuevo}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> Crear primer grupo
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Información adicional -->
+    <div class="row mt-3">
+        <div class="col">
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle"></i>
+                <strong>Nota:</strong> Los grupos permiten organizar productos y asignar un IVA específico por categoría.
+            </div>
+        </div>
+    </div>
+</div>
+
+<div th:replace="fragments/footer :: footer"></div>
+<div th:replace="fragments/footer :: scripts"></div>
+
+<script>
+    // Activar búsqueda en tiempo real
+    filtrarTabla('buscarGrupo', 'tablaGrupos');
+</script>
+</body>
+</html>

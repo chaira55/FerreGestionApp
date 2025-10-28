@@ -15,14 +15,8 @@ public interface ProductoRepository extends JpaRepository<Producto, Integer> {
     // Buscar por descripción (parcial, ignorando mayúsculas)
     Page<Producto> findByDescripcionContainingIgnoreCase(String descripcion, Pageable pageable);
 
-    // Filtrar por clase
-    Page<Producto> findByClaseCodigoClase(String codigoClase, Pageable pageable);
-
     // Filtrar por grupo
     Page<Producto> findByGrupoCodigoGrupo(String codigoGrupo, Pageable pageable);
-
-    // Filtrar por rango de precio
-    Page<Producto> findByPrecioVentaBetween(BigDecimal min, BigDecimal max, Pageable pageable);
 
     // Stock bajo
     List<Producto> findByStockLessThanEqual(int stock);

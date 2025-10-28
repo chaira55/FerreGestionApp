@@ -50,28 +50,10 @@ public class ProductoService {
                 .map(productoMapper::toResponseDTO);
     }
 
-    // NUEVO: Filtrar por clase
-    public Page<ProductoResponseDTO> filtrarPorClase(String codigoClase, int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
-        return productoRepository.findByClaseCodigoClase(codigoClase, pageable)
-                .map(productoMapper::toResponseDTO);
-    }
-
     // NUEVO: Filtrar por grupo
     public Page<ProductoResponseDTO> filtrarPorGrupo(String codigoGrupo, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         return productoRepository.findByGrupoCodigoGrupo(codigoGrupo, pageable)
-                .map(productoMapper::toResponseDTO);
-    }
-
-    // NUEVO: Filtrar por rango de precio
-    public Page<ProductoResponseDTO> filtrarPorRangoPrecio(
-            BigDecimal precioMin,
-            BigDecimal precioMax,
-            int page,
-            int size) {
-        Pageable pageable = PageRequest.of(page, size);
-        return productoRepository.findByPrecioVentaBetween(precioMin, precioMax, pageable)
                 .map(productoMapper::toResponseDTO);
     }
 

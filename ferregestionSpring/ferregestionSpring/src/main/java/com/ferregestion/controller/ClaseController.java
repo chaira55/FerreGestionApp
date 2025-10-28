@@ -1,7 +1,5 @@
 package com.ferregestion.controller;
 
-import com.ferregestion.entity.Clase;
-import com.ferregestion.service.ClaseService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

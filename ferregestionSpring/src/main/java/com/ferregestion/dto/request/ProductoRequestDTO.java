@@ -21,8 +21,7 @@ public class ProductoRequestDTO {
     @Size(max = 200, message = "La descripción no puede superar los 200 caracteres")
     private String descripcion;
 
-    private String codigoClase;  // Opcional
-    private String codigoGrupo;  // Opcional
+    private String codigoGrupo;
 
     @DecimalMin(value = "0.0", message = "El IVA debe ser mayor o igual a 0")
     private BigDecimal iva;

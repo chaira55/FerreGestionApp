@@ -1,8 +1,6 @@
 package com.ferregestion.service;
 
-import com.ferregestion.entity.Clase;
 import com.ferregestion.exception.ResourceNotFoundException;
-import com.ferregestion.repository.ClaseRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;

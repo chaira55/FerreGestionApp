@@ -14,7 +14,6 @@ import java.math.BigDecimal;
 public class ProductoResponseDTO {
     private Integer idProducto;
     private String descripcion;
-    private ClaseResponseDTO clase;
     private GrupoResponseDTO grupo;
     private BigDecimal iva;
     private BigDecimal precioCompra;

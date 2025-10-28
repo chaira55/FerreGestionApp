@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/head :: head(${accion} + ' Producto - FerreGestión')"></head>
+<body>
+<div th:replace="fragments/navbar :: navbar"></div>
+
+<div class="container mt-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a th:href="@{/}">Inicio</a></li>
+            <li class="breadcrumb-item"><a th:href="@{/web/productos}">Productos</a></li>
+            <li class="breadcrumb-item active" th:text="${accion}">Nuevo</li>
+        </ol>
+    </nav>
+
+    <!-- Título -->
+    <div class="row mb-4">
+        <div class="col">
+            <h1>
+                <i class="bi bi-box-seam" th:if="${accion == 'Nuevo'}"></i>
+                <i class="bi bi-pencil" th:if="${accion == 'Editar'}"></i>
+                <span th:text="${accion}">Nuevo</span> Producto
+            </h1>
+        </div>
+    </div>
+
+    <!-- Mensaje de error -->
+    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle"></i>
+        <span th:text="${error}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <!-- Formulario -->
+    <div class="card">
+        <div class="card-body">
+            <form th:action="${accion == 'Nuevo'} ? @{/web/productos/guardar} : @{/web/productos/actualizar/{id}(id=${productoId})}"
+                  method="post"
+                  class="needs-validation"
+                  novalidate>
+
+                <!-- Información básica -->
+                <h5 class="mb-3"><i class="bi bi-info-circle"></i> Información Básica</h5>
+
+                <div class="row">
+                    <!-- Descripción -->
+                    <div class="col-md-12 mb-3">
+                        <label for="descripcion" class="form-label">
+                            Descripción <span class="text-danger">*</span>
+                        </label>
+                        <input type="text"
+                               class="form-control"
+                               id="descripcion"
+                               name="descripcion"
+                               th:value="${producto.descripcion}"
+                               maxlength="200"
+                               placeholder="Ej: Tornillo acero inoxidable 1/4"
+                               required>
+                        <div class="invalid-feedback">
+                            La descripción es obligatoria
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <!-- Grupo -->
+                    <div class="col-md-6 mb-3">
+                        <label for="codigoGrupo" class="form-label">
+                            <i class="bi bi-folder"></i> Grupo
+                        </label>
+                        <select class="form-select"
+                                id="codigoGrupo"
+                                name="codigoGrupo">
+                            <option value="">Ninguno</option>
+                            <option th:each="grupo : ${grupos}"
+                                    th:value="${grupo.codigoGrupo}"
+                                    th:text="${grupo.nombre}"
+                                    th:selected="${producto.codigoGrupo != null && producto.codigoGrupo == grupo.codigoGrupo}">
+                            </option>
+                        </select>
+                        <small class="text-muted">
+                            <a th:href="@{/web/grupos/nuevo}" target="_blank">
+                                <i class="bi bi-plus-circle"></i> Crear nuevo grupo
+                            </a>
+                        </small>
+                    </div>
+                </div>
+
+                <hr class="my-4">
+
+                <!-- Información de precios -->
+                <h5 class="mb-3"><i class="bi bi-cash-stack"></i> Precios e IVA</h5>
+
+                <div class="row">
+                    <!-- IVA -->
+                    <div class="col-md-4 mb-3">
+                        <label for="iva" class="form-label">
+                            IVA (%) <span class="text-danger">*</span>
+                        </label>
+                        <input type="number"
+                               class="form-control"
+                               id="iva"
+                               name="iva"
+                               th:value="${producto.iva}"
+                               step="0.01"
+                               min="0"
+                               value="19.00"
+                               required>
+                        <div class="invalid-feedback">
+                            El IVA es obligatorio
+                        </div>
+                    </div>
+
+                    <!-- Precio Compra -->
+                    <div class="col-md-4 mb-3">
+                        <label for="precioCompra" class="form-label">
+                            Precio de Compra <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            <input type="number"
+                                   class="form-control"
+                                   id="precioCompra"
+                                   name="precioCompra"
+                                   th:value="${producto.precioCompra}"
+                                   step="0.01"
+                                   min="0"
+                                   oninput="calcularMargen()"
+                                   required>
+                        </div>
+                        <div class="invalid-feedback">
+                            El precio de compra es obligatorio
+                        </div>
+                    </div>
+
+                    <!-- Precio Venta -->
+                    <div class="col-md-4 mb-3">
+                        <label for="precioVenta" class="form-label">
+                            Precio de Venta <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            <input type="number"
+                                   class="form-control"
+                                   id="precioVenta"
+                                   name="precioVenta"
+                                   th:value="${producto.precioVenta}"
+                                   step="0.01"
+                                   min="0"
+                                   oninput="calcularMargen()"
+                                   required>
+                        </div>
+                        <div class="invalid-feedback">
+                            El precio de venta es obligatorio
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Margen de ganancia -->
+                <div class="row">
+                    <div class="col-md-12 mb-3">
+                        <div class="alert alert-info" id="margenInfo" style="display: none;">
+                            <i class="bi bi-calculator"></i>
+                            <strong>Margen de ganancia:</strong>
+                            <span id="margenValor">0%</span>
+                            (<span id="margenMonto">$0</span>)
+                        </div>
+                    </div>
+                </div>
+
+                <hr class="my-4">
+
+                <!-- Stock -->
+                <h5 class="mb-3"><i class="bi bi-box-seam"></i> Inventario</h5>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="stock" class="form-label">
+                            Stock Disponible <span class="text-danger">*</span>
+                        </label>
+                        <input type="number"
+                               class="form-control"
+                               id="stock"
+                               name="stock"
+                               th:value="${producto.stock}"
+                               min="0"
+                               value="0"
+                               required>
+                        <small class="text-muted">
+                            Cantidad de unidades disponibles para la venta
+                        </small>
+                        <div class="invalid-feedback">
+                            El stock es obligatorio
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Botones -->
+                <div class="row mt-4">
+                    <div class="col">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save"></i> Guardar
+                        </button>
+                        <a th:href="@{/web/productos}" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Cancelar
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div th:replace="fragments/footer :: footer"></div>
+<div th:replace="fragments/footer :: scripts"></div>
+
+<script>
+    // Calcular margen de ganancia
+    function calcularMargen() {
+        const precioCompra = parseFloat(document.getElementById('precioCompra').value) || 0;
+        const precioVenta = parseFloat(document.getElementById('precioVenta').value) || 0;
+
+        if (precioCompra > 0 && precioVenta > 0) {
+            const margen = ((precioVenta - precioCompra) / precioCompra) * 100;
+            const ganancia = precioVenta - precioCompra;
+
+            document.getElementById('margenInfo').style.display = 'block';
+            document.getElementById('margenValor').textContent = margen.toFixed(2) + '%';
+            document.getElementById('margenMonto').textContent = formatearMoneda(ganancia);
+
+            // Cambiar color según el margen
+            const alertDiv = document.getElementById('margenInfo');
+            if (margen < 10) {
+                alertDiv.className = 'alert alert-warning';
+            } else if (margen < 30) {
+                alertDiv.className = 'alert alert-info';
+            } else {
+                alertDiv.className = 'alert alert-success';
+            }
+        } else {
+            document.getElementById('margenInfo').style.display = 'none';
+        }
+    }
+
+    // Formatear números como moneda
+    function formatearMoneda(numero) {
+        return new Intl.NumberFormat('es-CO', {
+            style: 'currency',
+            currency: 'COP',
+            minimumFractionDigits: 0
+        }).format(numero);
+    }
+
+    // Calcular al cargar la página si hay valores
+    window.onload = function() {
+        calcularMargen();
+    };
+</script>
+</body>
+</html>

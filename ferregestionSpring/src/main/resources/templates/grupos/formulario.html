@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/head :: head(${accion} + ' Grupo - FerreGestión')"></head>
+<body>
+<div th:replace="fragments/navbar :: navbar"></div>
+
+<div class="container mt-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a th:href="@{/}">Inicio</a></li>
+            <li class="breadcrumb-item"><a th:href="@{/web/grupos}">Grupos</a></li>
+            <li class="breadcrumb-item active" th:text="${accion}">Nuevo</li>
+        </ol>
+    </nav>
+
+    <!-- Título -->
+    <div class="row mb-4">
+        <div class="col">
+            <h1>
+                <i class="bi bi-folder-plus" th:if="${accion == 'Nuevo'}"></i>
+                <i class="bi bi-pencil" th:if="${accion == 'Editar'}"></i>
+                <span th:text="${accion}">Nuevo</span> Grupo
+            </h1>
+        </div>
+    </div>
+
+    <!-- Mensaje de error -->
+    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle"></i>
+        <span th:text="${error}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <!-- Formulario -->
+    <div class="card">
+        <div class="card-body">
+            <form th:action="${accion == 'Nuevo'} ? @{/web/grupos/guardar} : @{/web/grupos/actualizar/{codigo}(codigo=${grupo.codigoGrupo})}"
+                  th:object="${grupo}"
+                  method="post"
+                  class="needs-validation"
+                  novalidate>
+
+                <div class="row">
+                    <!-- Código del Grupo -->
+                    <div class="col-md-4 mb-3">
+                        <label for="codigoGrupo" class="form-label">
+                            Código del Grupo <span class="text-danger">*</span>
+                        </label>
+                        <input type="text"
+                               class="form-control"
+                               id="codigoGrupo"
+                               th:field="*{codigoGrupo}"
+                               th:readonly="${accion == 'Editar'}"
+                               maxlength="20"
+                               style="text-transform: uppercase;"
+                               required>
+                        <small class="text-muted">Ejemplo: GR001, HERR, ELEC</small>
+                        <div class="invalid-feedback">
+                            El código es obligatorio
+                        </div>
+                        <div th:if="${#fields.hasErrors('codigoGrupo')}" class="text-danger">
+                            <small th:errors="*{codigoGrupo}"></small>
+                        </div>
+                    </div>
+
+                    <!-- Nombre del Grupo -->
+                    <div class="col-md-5 mb-3">
+                        <label for="nombre" class="form-label">
+                            Nombre del Grupo <span class="text-danger">*</span>
+                        </label>
+                        <input type="text"
+                               class="form-control"
+                               id="nombre"
+                               th:field="*{nombre}"
+                               maxlength="100"
+                               placeholder="Ej: Herramientas Manuales"
+                               required>
+                        <div class="invalid-feedback">
+                            El nombre es obligatorio
+                        </div>
+                        <div th:if="${#fields.hasErrors('nombre')}" class="text-danger">
+                            <small th:errors="*{nombre}"></small>
+                        </div>
+                    </div>
+
+                    <!-- IVA -->
+                    <div class="col-md-3 mb-3">
+                        <label for="iva" class="form-label">
+                            IVA (%) <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-group">
+                            <input type="number"
+                                   class="form-control"
+                                   id="iva"
+                                   th:field="*{iva}"
+                                   step="0.01"
+                                   min="0"
+                                   max="100"
+                                   value="19.00"
+                                   required>
+                            <span class="input-group-text">%</span>
+                        </div>
+                        <small class="text-muted">Valor del IVA para productos de este grupo</small>
+                        <div class="invalid-feedback">
+                            El IVA es obligatorio
+                        </div>
+                        <div th:if="${#fields.hasErrors('iva')}" class="text-danger">
+                            <small th:errors="*{iva}"></small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ejemplos de IVA comunes -->
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h6 class="card-title">
+                                    <i class="bi bi-lightbulb"></i> Valores de IVA comunes en Colombia:
+                                </h6>
+                                <div class="btn-group" role="group">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="setIVA(0)">
+                                        0% - Exento
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="setIVA(5)">
+                                        5% - Reducido
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="setIVA(19)">
+                                        19% - General
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Información adicional -->
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle"></i>
+                            <strong>Nota:</strong> El IVA configurado aquí se aplicará automáticamente a todos los productos nuevos que se asignen a este grupo. Los productos existentes mantendrán su IVA actual.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Botones -->
+                <div class="row mt-4">
+                    <div class="col">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save"></i> Guardar
+                        </button>
+                        <a th:href="@{/web/grupos}" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Cancelar
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div th:replace="fragments/footer :: footer"></div>
+<div th:replace="fragments/footer :: scripts"></div>
+
+<script>
+    // Función para establecer el IVA predeterminado
+    function setIVA(valor) {
+        document.getElementById('iva').value = valor.toFixed(2);
+    }
+
+    // Convertir código a mayúsculas automáticamente
+    document.getElementById('codigoGrupo')?.addEventListener('input', function(e) {
+        e.target.value = e.target.value.toUpperCase();
+    });
+</script>
+</body>
+</html>

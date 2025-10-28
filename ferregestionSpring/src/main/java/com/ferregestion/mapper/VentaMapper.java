@@ -3,14 +3,14 @@ package com.ferregestion.mapper;
 import com.ferregestion.dto.request.DetalleVentaRequestDTO;
 import com.ferregestion.dto.request.VentaRequestDTO;
 import com.ferregestion.dto.response.DetalleVentaResponseDTO;
+import com.ferregestion.dto.response.ProductoResponseDTO;
 import com.ferregestion.dto.response.VentaResponseDTO;
 import com.ferregestion.entity.*;
-import com.ferregestion.exception.ResourceNotFoundException;
 import com.ferregestion.repository.ClienteRepository;
-import com.ferregestion.repository.CotizacionRepository;
 import com.ferregestion.repository.ProductoRepository;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -20,73 +20,69 @@ public class VentaMapper {
 
     private final ClienteRepository clienteRepository;
     private final ProductoRepository productoRepository;
-    private final CotizacionRepository cotizacionRepository;
     private final ClienteMapper clienteMapper;
+    private final ProductoMapper productoMapper;
 
     public VentaMapper(ClienteRepository clienteRepository,
                        ProductoRepository productoRepository,
-                       CotizacionRepository cotizacionRepository,
-                       ClienteMapper clienteMapper) {
+                       ClienteMapper clienteMapper,
+                       ProductoMapper productoMapper) {
         this.clienteRepository = clienteRepository;
         this.productoRepository = productoRepository;
-        this.cotizacionRepository = cotizacionRepository;
         this.clienteMapper = clienteMapper;
+        this.productoMapper = productoMapper;
     }
 
+    // Convertir VentaRequestDTO a Venta (Entity)
     public Venta toEntity(VentaRequestDTO dto) {
         if (dto == null) {
             return null;
         }
 
-        // Buscar cliente
-        Cliente cliente = clienteRepository.findById(dto.getCedula())
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Cliente con cédula " + dto.getCedula() + " no encontrado"));
-
         Venta venta = Venta.builder()
-                .cliente(cliente)
-                .nombre(dto.getNombre())
                 .fecha(dto.getFecha())
-                .total(dto.getTotal())
                 .tipoPago(dto.getTipoPago())
-                .detalles(new ArrayList<>())
+                .total(dto.getTotal())
                 .build();
 
-        // Buscar cotización si existe
-        if (dto.getIdCotizacion() != null) {
-            Cotizacion cotizacion = cotizacionRepository.findById(dto.getIdCotizacion())
-                    .orElseThrow(() -> new ResourceNotFoundException(
-                            "Cotización con ID " + dto.getIdCotizacion() + " no encontrada"));
-            venta.setCotizacion(cotizacion);
+        // Cargar cliente
+        if (dto.getCedula() != null) {
+            Cliente cliente = clienteRepository.findById(dto.getCedula())
+                    .orElseThrow(() -> new RuntimeException("Cliente no encontrado con cédula: " + dto.getCedula()));
+            venta.setCliente(cliente);
         }
 
-        // Mapear detalles
-        if (dto.getDetalles() != null) {
-            List<DetalleVenta> detalles = dto.getDetalles().stream()
-                    .map(detalleDTO -> toDetalleEntity(detalleDTO, venta))
-                    .collect(Collectors.toList());
+        // Cargar detalles
+        if (dto.getDetalles() != null && !dto.getDetalles().isEmpty()) {
+            List<DetalleVenta> detalles = new ArrayList<>();
+
+            for (DetalleVentaRequestDTO detalleDTO : dto.getDetalles()) {
+                // Calcular subtotal
+                BigDecimal subtotal = detalleDTO.getPrecioUnitario()
+                        .multiply(new BigDecimal(detalleDTO.getCantidad()));
+
+                DetalleVenta detalle = DetalleVenta.builder()
+                        .cantidad(detalleDTO.getCantidad())
+                        .precioUnitario(detalleDTO.getPrecioUnitario())
+                        .subtotal(subtotal)
+                        .venta(venta)
+                        .build();
+
+                // Cargar producto
+                Producto producto = productoRepository.findById(detalleDTO.getIdProducto())
+                        .orElseThrow(() -> new RuntimeException("Producto no encontrado con id: " + detalleDTO.getIdProducto()));
+                detalle.setProducto(producto);
+
+                detalles.add(detalle);
+            }
+
             venta.setDetalles(detalles);
         }
 
         return venta;
     }
 
-    private DetalleVenta toDetalleEntity(DetalleVentaRequestDTO dto, Venta venta) {
-        Producto producto = productoRepository.findById(dto.getIdProducto())
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Producto con ID " + dto.getIdProducto() + " no encontrado"));
-
-        return DetalleVenta.builder()
-                .venta(venta)
-                .producto(producto)
-                .descripcionProducto(dto.getDescripcionProducto() != null ?
-                        dto.getDescripcionProducto() : producto.getDescripcion())
-                .cantidad(dto.getCantidad())
-                .precioUnitario(dto.getPrecioUnitario())
-                .subtotal(dto.getSubtotal())
-                .build();
-    }
-
+    // Convertir Venta (Entity) a VentaResponseDTO
     public VentaResponseDTO toResponseDTO(Venta entity) {
         if (entity == null) {
             return null;
@@ -95,9 +91,6 @@ public class VentaMapper {
         return VentaResponseDTO.builder()
                 .idVenta(entity.getIdVenta())
                 .cliente(clienteMapper.toResponseDTO(entity.getCliente()))
-                .nombre(entity.getNombre())
-                .idCotizacion(entity.getCotizacion() != null ?
-                        entity.getCotizacion().getIdCotizacion() : null)
                 .fecha(entity.getFecha())
                 .total(entity.getTotal())
                 .tipoPago(entity.getTipoPago())
@@ -108,14 +101,36 @@ public class VentaMapper {
                 .build();
     }
 
+    // Convertir DetalleVenta (Entity) a DetalleVentaResponseDTO
     private DetalleVentaResponseDTO toDetalleResponseDTO(DetalleVenta entity) {
+        if (entity == null) {
+            return null;
+        }
+
+        BigDecimal subtotal = entity.getSubtotal();
+        if (subtotal == null && entity.getCantidad() != null && entity.getPrecioUnitario() != null) {
+            subtotal = entity.getPrecioUnitario().multiply(new BigDecimal(entity.getCantidad()));
+        }
+
+        // Crear ProductoResponseDTO manualmente (sin mapper para evitar dependencia circular)
+        ProductoResponseDTO productoDTO = null;
+        if (entity.getProducto() != null) {
+            Producto p = entity.getProducto();
+            productoDTO = ProductoResponseDTO.builder()
+                    .idProducto(p.getIdProducto())
+                    .descripcion(p.getDescripcion())
+                    .precioVenta(p.getPrecioVenta())
+                    .stock(p.getStock())
+                    .iva(p.getIva())
+                    .build();
+        }
+
         return DetalleVentaResponseDTO.builder()
-                .idDetalleVenta(entity.getIdDetalleVenta())
-                .idProducto(entity.getProducto().getIdProducto())
-                .descripcionProducto(entity.getDescripcionProducto())
+                .idDetalleVenta(entity.getIdDetalleVenta())  // ✅ CORREGIDO
+                .producto(productoDTO)
                 .cantidad(entity.getCantidad())
                 .precioUnitario(entity.getPrecioUnitario())
-                .subtotal(entity.getSubtotal())
+                .subtotal(subtotal)
                 .build();
     }
 }

@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/head :: head('Detalle Producto - FerreGestión')"></head>
+<body>
+<div th:replace="fragments/navbar :: navbar"></div>
+
+<div class="container mt-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a th:href="@{/}">Inicio</a></li>
+            <li class="breadcrumb-item"><a th:href="@{/web/productos}">Productos</a></li>
+            <li class="breadcrumb-item active">Detalle</li>
+        </ol>
+    </nav>
+
+    <!-- Título y acciones -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1><i class="bi bi-box-seam"></i> Detalle del Producto</h1>
+        </div>
+        <div class="col-md-4 text-end">
+            <a th:href="@{/web/productos/editar/{id}(id=${producto.idProducto})}"
+               class="btn btn-warning">
+                <i class="bi bi-pencil"></i> Editar
+            </a>
+            <a th:href="@{/web/productos}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Volver
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Información del producto -->
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-info-circle"></i> Información General
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless">
+                        <tr>
+                            <th width="30%">ID:</th>
+                            <td th:text="${producto.idProducto}">1</td>
+                        </tr>
+                        <tr>
+                            <th>Descripción:</th>
+                            <td th:text="${producto.descripcion}">Tornillo acero 1/4</td>
+                        </tr>
+                        <tr>
+                            <th>Grupo:</th>
+                            <td>
+                                    <span th:if="${producto.grupo != null}"
+                                          th:text="${producto.grupo.nombre}"
+                                          class="badge bg-info text-dark">
+                                        Grupo
+                                    </span>
+                                <span th:unless="${producto.grupo != null}" class="text-muted">No asignado</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>IVA:</th>
+                            <td th:text="${producto.iva} + '%'">19%</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Precios -->
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-cash-stack"></i> Precios
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-4">
+                            <div class="border rounded p-3">
+                                <i class="bi bi-cart-dash fs-2 text-info"></i>
+                                <h4 class="mt-2" th:text="${'$' + #numbers.formatDecimal(producto.precioCompra, 0, 'COMMA', 0, 'POINT')}">
+                                    $500
+                                </h4>
+                                <small class="text-muted">Precio Compra</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="border rounded p-3">
+                                <i class="bi bi-cart-plus fs-2 text-success"></i>
+                                <h4 class="mt-2" th:text="${'$' + #numbers.formatDecimal(producto.precioVenta, 0, 'COMMA', 0, 'POINT')}">
+                                    $750
+                                </h4>
+                                <small class="text-muted">Precio Venta</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="border rounded p-3">
+                                <i class="bi bi-calculator fs-2 text-warning"></i>
+                                <h4 class="mt-2">
+                                    <th:block th:if="${producto.precioCompra > 0}">
+                                            <span th:text="${#numbers.formatDecimal((producto.precioVenta - producto.precioCompra) / producto.precioCompra * 100, 1, 'COMMA', 2, 'POINT')}">
+                                                50.0
+                                            </span>%
+                                    </th:block>
+                                    <th:block th:unless="${producto.precioCompra > 0}">
+                                        N/A
+                                    </th:block>
+                                </h4>
+                                <small class="text-muted">Margen Ganancia</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stock y estadísticas -->
+        <div class="col-md-4">
+            <!-- Stock -->
+            <div class="card mb-4">
+                <div class="card-header"
+                     th:classappend="${producto.stock < 10} ? 'bg-danger text-white' : (${producto.stock < 50} ? 'bg-warning' : 'bg-success text-white')">
+                    <h5 class="mb-0">
+                        <i class="bi bi-box"></i> Stock
+                    </h5>
+                </div>
+                <div class="card-body text-center">
+                    <h1 class="display-3" th:text="${producto.stock}">100</h1>
+                    <p class="text-muted mb-0">Unidades disponibles</p>
+
+                    <div class="mt-3">
+                            <span th:if="${producto.stock < 10}" class="badge bg-danger fs-6">
+                                <i class="bi bi-exclamation-triangle"></i> Stock Crítico
+                            </span>
+                        <span th:if="${producto.stock >= 10 && producto.stock < 50}" class="badge bg-warning fs-6">
+                                <i class="bi bi-exclamation-circle"></i> Stock Bajo
+                            </span>
+                        <span th:if="${producto.stock >= 50}" class="badge bg-success fs-6">
+                                <i class="bi bi-check-circle"></i> Stock Normal
+                            </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Valor del inventario -->
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-currency-dollar"></i> Valor Inventario
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-2">
+                        <strong>Costo Total:</strong><br>
+                        <span class="fs-5 text-primary"
+                              th:text="${'$' + #numbers.formatDecimal(producto.precioCompra * producto.stock, 0, 'COMMA', 0, 'POINT')}">
+                                $50,000
+                            </span>
+                    </p>
+                    <hr>
+                    <p class="mb-2">
+                        <strong>Valor de Venta:</strong><br>
+                        <span class="fs-5 text-success"
+                              th:text="${'$' + #numbers.formatDecimal(producto.precioVenta * producto.stock, 0, 'COMMA', 0, 'POINT')}">
+                                $75,000
+                            </span>
+                    </p>
+                    <hr>
+                    <p class="mb-0">
+                        <strong>Ganancia Potencial:</strong><br>
+                        <span class="fs-5 text-warning"
+                              th:text="${'$' + #numbers.formatDecimal((producto.precioVenta - producto.precioCompra) * producto.stock, 0, 'COMMA', 0, 'POINT')}">
+                                $25,000
+                            </span>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Historial de movimientos (futuro) -->
+    <div class="row mt-4">
+        <div class="col">
+            <div class="card">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-clock-history"></i> Historial de Movimientos
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i>
+                        El historial de movimientos (ventas, compras, ajustes) se implementará próximamente.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div th:replace="fragments/footer :: footer"></div>
+<div th:replace="fragments/footer :: scripts"></div>
+</body>
+</html>

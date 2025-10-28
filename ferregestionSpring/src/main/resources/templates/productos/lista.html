@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/head :: head('Productos - FerreGestión')"></head>
+<body>
+<div th:replace="fragments/navbar :: navbar"></div>
+
+<div class="container mt-4">
+    <!-- Título y botón nuevo -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <h1><i class="bi bi-box"></i> Productos</h1>
+            <p class="text-muted">Gestión de inventario de productos</p>
+        </div>
+        <div class="col-md-6 text-end">
+            <a th:href="@{/web/productos/nuevo}" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Nuevo Producto
+            </a>
+        </div>
+    </div>
+
+    <!-- Mensajes de alerta -->
+    <div th:if="${mensaje}"
+         th:class="'alert alert-' + ${tipoMensaje} + ' alert-dismissible fade show'"
+         role="alert">
+        <span th:text="${mensaje}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <!-- Buscador y filtros -->
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <div class="input-group">
+                    <span class="input-group-text">
+                        <i class="bi bi-search"></i>
+                    </span>
+                <input type="text"
+                       id="buscarProducto"
+                       class="form-control"
+                       placeholder="Buscar por descripción, precio...">
+            </div>
+        </div>
+        <div class="col-md-6 text-end">
+                <span class="badge bg-info text-dark fs-6">
+                    Total: <span th:text="${productos.size()}">0</span> productos
+                </span>
+        </div>
+    </div>
+
+    <!-- Tabla de productos -->
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover" id="tablaProductos">
+                    <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Descripción</th>
+                        <th>Grupo</th>
+                        <th>IVA %</th>
+                        <th>Precio Compra</th>
+                        <th>Precio Venta</th>
+                        <th>Stock</th>
+                        <th class="text-center">Acciones</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="producto : ${productos}">
+                        <td th:text="${producto.idProducto}">1</td>
+                        <td th:text="${producto.descripcion}">Tornillo acero 1/4</td>
+                        <td>
+                                    <span th:if="${producto.grupo != null}"
+                                          th:text="${producto.grupo.nombre}"
+                                          class="badge bg-info text-dark">
+                                        Grupo
+                                    </span>
+                            <span th:unless="${producto.grupo != null}" class="text-muted">N/A</span>
+                        </td>
+                        <td th:text="${producto.iva} + '%'">19%</td>
+                        <td th:text="${'$' + #numbers.formatDecimal(producto.precioCompra, 0, 'COMMA', 0, 'POINT')}">$500</td>
+                        <td th:text="${'$' + #numbers.formatDecimal(producto.precioVenta, 0, 'COMMA', 0, 'POINT')}">$750</td>
+                        <td>
+                                    <span th:if="${producto.stock < 10}"
+                                          class="badge bg-danger"
+                                          th:text="${producto.stock}">5</span>
+                            <span th:if="${producto.stock >= 10 && producto.stock < 50}"
+                                  class="badge bg-warning"
+                                  th:text="${producto.stock}">25</span>
+                            <span th:if="${producto.stock >= 50}"
+                                  class="badge bg-success"
+                                  th:text="${producto.stock}">100</span>
+                        </td>
+                        <td class="text-center">
+                            <div class="btn-group" role="group">
+                                <a th:href="@{/web/productos/ver/{id}(id=${producto.idProducto})}"
+                                   class="btn btn-sm btn-info text-white"
+                                   title="Ver detalle">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a th:href="@{/web/productos/editar/{id}(id=${producto.idProducto})}"
+                                   class="btn btn-sm btn-warning"
+                                   title="Editar">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <a th:href="@{/web/productos/eliminar/{id}(id=${producto.idProducto})}"
+                                   class="btn btn-sm btn-danger"
+                                   onclick="return confirm('¿Está seguro de eliminar este producto?')"
+                                   title="Eliminar">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Mensaje si no hay productos -->
+            <div th:if="${productos.empty}" class="text-center py-5">
+                <i class="bi bi-inbox fs-1 text-muted"></i>
+                <p class="text-muted mt-3">No hay productos registrados</p>
+                <a th:href="@{/web/productos/nuevo}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> Crear primer producto
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Leyenda de stock -->
+    <div class="row mt-3">
+        <div class="col">
+            <small class="text-muted">
+                <i class="bi bi-info-circle"></i> Leyenda de stock:
+                <span class="badge bg-danger">Crítico (&lt;10)</span>
+                <span class="badge bg-warning">Bajo (10-49)</span>
+                <span class="badge bg-success">Normal (≥50)</span>
+            </small>
+        </div>
+    </div>
+</div>
+
+<div th:replace="fragments/footer :: footer"></div>
+<div th:replace="fragments/footer :: scripts"></div>
+
+<script>
+    // Activar búsqueda en tiempo real
+    filtrarTabla('buscarProducto', 'tablaProductos');
+</script>
+</body>
+</html>
