@@ -1,47 +1,57 @@
 package com.ferregestion.service;
 
+import com.ferregestion.dto.request.GrupoRequestDTO;
+import com.ferregestion.dto.response.GrupoResponseDTO;
 import com.ferregestion.entity.Grupo;
 import com.ferregestion.exception.ResourceNotFoundException;
+import com.ferregestion.mapper.GrupoMapper;
 import com.ferregestion.repository.GrupoRepository;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class GrupoService {
 
     private final GrupoRepository grupoRepository;
+    private final GrupoMapper grupoMapper;
 
-    public GrupoService(GrupoRepository grupoRepository) {
+    public GrupoService(GrupoRepository grupoRepository, GrupoMapper grupoMapper) {
         this.grupoRepository = grupoRepository;
+        this.grupoMapper = grupoMapper;
     }
 
-    public List<Grupo> listarTodos() {
-        return grupoRepository.findAll();
+    public List<GrupoResponseDTO> listarTodos() {
+        return grupoRepository.findAll().stream()
+                .map(grupoMapper::toResponseDTO)
+                .collect(Collectors.toList());
     }
 
-    public Grupo buscarPorId(String codigoGrupo) {
-        return grupoRepository.findById(codigoGrupo)
+    public GrupoResponseDTO buscarPorId(String codigoGrupo) {
+        Grupo grupo = grupoRepository.findById(codigoGrupo)
                 .orElseThrow(() -> new ResourceNotFoundException("Grupo con código " + codigoGrupo + " no encontrado"));
+        return grupoMapper.toResponseDTO(grupo);
     }
 
-    public Grupo guardar(Grupo grupo) {
-        if (grupo.getIva() == null) {
-            grupo.setIva(new BigDecimal("19.00"));
-        }
-        return grupoRepository.save(grupo);
+    public GrupoResponseDTO guardar(GrupoRequestDTO grupoDTO) {
+        Grupo grupo = grupoMapper.toEntity(grupoDTO);
+        Grupo grupoGuardado = grupoRepository.save(grupo);
+        return grupoMapper.toResponseDTO(grupoGuardado);
     }
 
-    public Grupo actualizar(String codigoGrupo, Grupo grupoActualizado) {
-        Grupo grupoExistente = buscarPorId(codigoGrupo);
-        grupoExistente.setNombre(grupoActualizado.getNombre());
-        grupoExistente.setIva(grupoActualizado.getIva());
-        return grupoRepository.save(grupoExistente);
+    public GrupoResponseDTO actualizar(String codigoGrupo, GrupoRequestDTO grupoDTO) {
+        Grupo grupoExistente = grupoRepository.findById(codigoGrupo)
+                .orElseThrow(() -> new ResourceNotFoundException("Grupo con código " + codigoGrupo + " no encontrado"));
+
+        grupoMapper.updateEntityFromDTO(grupoDTO, grupoExistente);
+        Grupo grupoActualizado = grupoRepository.save(grupoExistente);
+        return grupoMapper.toResponseDTO(grupoActualizado);
     }
 
     public void eliminar(String codigoGrupo) {
-        Grupo grupo = buscarPorId(codigoGrupo);
+        Grupo grupo = grupoRepository.findById(codigoGrupo)
+                .orElseThrow(() -> new ResourceNotFoundException("Grupo con código " + codigoGrupo + " no encontrado"));
         grupoRepository.delete(grupo);
     }
 }

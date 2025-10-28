@@ -7,12 +7,13 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ErrorResponse {
+public class ValidationErrorResponse {
 
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime timestamp;
@@ -24,4 +25,15 @@ public class ErrorResponse {
     private String message;
 
     private String path;
+
+    private List<FieldError> fieldErrors;
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class FieldError {
+        private String field;
+        private String message;
+        private Object rejectedValue;
+    }
 }

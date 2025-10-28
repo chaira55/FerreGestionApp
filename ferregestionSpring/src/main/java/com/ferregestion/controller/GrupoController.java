@@ -1,7 +1,11 @@
 package com.ferregestion.controller;
 
-import com.ferregestion.entity.Grupo;
+import com.ferregestion.dto.request.GrupoRequestDTO;
+import com.ferregestion.dto.response.GrupoResponseDTO;
 import com.ferregestion.service.GrupoService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -10,6 +14,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/grupos")
+@Tag(name = "Grupos", description = "API para gestión de grupos de productos")
 public class GrupoController {
 
     private final GrupoService grupoService;
@@ -18,29 +23,36 @@ public class GrupoController {
         this.grupoService = grupoService;
     }
 
+    @Operation(summary = "Listar todos los grupos")
     @GetMapping
-    public List<Grupo> listarTodos() {
-        return grupoService.listarTodos();
+    public ResponseEntity<List<GrupoResponseDTO>> listarTodos() {
+        return ResponseEntity.ok(grupoService.listarTodos());
     }
 
-    @GetMapping("/{codigo}")  // CAMBIO: id → codigo
-    public Grupo buscarPorCodigo(@PathVariable String codigo) {  // CAMBIO: Integer → String
-        return grupoService.buscarPorId(codigo);
+    @Operation(summary = "Buscar grupo por código")
+    @GetMapping("/{codigo}")
+    public ResponseEntity<GrupoResponseDTO> buscarPorCodigo(@PathVariable String codigo) {
+        return ResponseEntity.ok(grupoService.buscarPorId(codigo));
     }
 
+    @Operation(summary = "Crear nuevo grupo")
     @PostMapping
-    public ResponseEntity<Grupo> crear(@RequestBody Grupo grupo) {
-        Grupo nuevoGrupo = grupoService.guardar(grupo);
+    public ResponseEntity<GrupoResponseDTO> crear(@Valid @RequestBody GrupoRequestDTO grupoDTO) {
+        GrupoResponseDTO nuevoGrupo = grupoService.guardar(grupoDTO);
         return new ResponseEntity<>(nuevoGrupo, HttpStatus.CREATED);
     }
 
-    @PutMapping("/{codigo}")  // CAMBIO: id → codigo
-    public Grupo actualizar(@PathVariable String codigo, @RequestBody Grupo grupoActualizado) {  // CAMBIO: Integer → String
-        return grupoService.actualizar(codigo, grupoActualizado);
+    @Operation(summary = "Actualizar grupo existente")
+    @PutMapping("/{codigo}")
+    public ResponseEntity<GrupoResponseDTO> actualizar(
+            @PathVariable String codigo,
+            @Valid @RequestBody GrupoRequestDTO grupoDTO) {
+        return ResponseEntity.ok(grupoService.actualizar(codigo, grupoDTO));
     }
 
-    @DeleteMapping("/{codigo}")  // CAMBIO: id → codigo
-    public ResponseEntity<Void> eliminar(@PathVariable String codigo) {  // CAMBIO: Integer → String
+    @Operation(summary = "Eliminar grupo")
+    @DeleteMapping("/{codigo}")
+    public ResponseEntity<Void> eliminar(@PathVariable String codigo) {
         grupoService.eliminar(codigo);
         return ResponseEntity.noContent().build();
     }

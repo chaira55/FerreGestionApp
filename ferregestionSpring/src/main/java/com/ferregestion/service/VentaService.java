@@ -1,114 +1,157 @@
 package com.ferregestion.service;
 
+import com.ferregestion.dto.request.VentaRequestDTO;
+import com.ferregestion.dto.response.VentaResponseDTO;
 import com.ferregestion.entity.Venta;
-import com.ferregestion.entity.Cliente;
-import com.ferregestion.entity.Cotizacion;
 import com.ferregestion.exception.ResourceNotFoundException;
+import com.ferregestion.mapper.VentaMapper;
 import com.ferregestion.repository.VentaRepository;
-import com.ferregestion.repository.ClienteRepository;
-import com.ferregestion.repository.CotizacionRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class VentaService {
 
     private final VentaRepository ventaRepository;
-    private final ClienteRepository clienteRepository;
-    private final CotizacionRepository cotizacionRepository;  // NUEVO
+    private final VentaMapper ventaMapper;
 
-    public VentaService(VentaRepository ventaRepository,
-                        ClienteRepository clienteRepository,
-                        CotizacionRepository cotizacionRepository) {  // NUEVO
+    public VentaService(VentaRepository ventaRepository, VentaMapper ventaMapper) {
         this.ventaRepository = ventaRepository;
-        this.clienteRepository = clienteRepository;
-        this.cotizacionRepository = cotizacionRepository;
+        this.ventaMapper = ventaMapper;
     }
 
-    public List<Venta> listarTodos() {
-        return ventaRepository.findAll();
+    public List<VentaResponseDTO> listarTodos() {
+        return ventaRepository.findAll().stream()
+                .map(ventaMapper::toResponseDTO)
+                .collect(Collectors.toList());
     }
 
-    public Venta buscarPorId(Integer idVenta) {
-        return ventaRepository.findById(idVenta)
+    // NUEVO: Paginación
+    public Page<VentaResponseDTO> listarTodosPaginado(int page, int size, String sortBy, String direction) {
+        Sort.Direction sortDirection = direction.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC;
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortBy));
+
+        return ventaRepository.findAll(pageable)
+                .map(ventaMapper::toResponseDTO);
+    }
+
+    // NUEVO: Buscar por cliente (cédula)
+    public Page<VentaResponseDTO> buscarPorCliente(Integer cedula, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "fecha"));
+        return ventaRepository.findByClienteCedula(cedula, pageable)
+                .map(ventaMapper::toResponseDTO);
+    }
+
+    // NUEVO: Buscar por nombre del cliente
+    public Page<VentaResponseDTO> buscarPorNombreCliente(String nombre, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "fecha"));
+        return ventaRepository.findByNombreContainingIgnoreCase(nombre, pageable)
+                .map(ventaMapper::toResponseDTO);
+    }
+
+    // NUEVO: Filtrar por tipo de pago
+    public Page<VentaResponseDTO> filtrarPorTipoPago(String tipoPago, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "fecha"));
+        return ventaRepository.findByTipoPago(tipoPago, pageable)
+                .map(ventaMapper::toResponseDTO);
+    }
+
+    // NUEVO: Filtrar por rango de fechas
+    public Page<VentaResponseDTO> filtrarPorRangoFechas(
+            LocalDate fechaInicio,
+            LocalDate fechaFin,
+            int page,
+            int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "fecha"));
+        return ventaRepository.findByFechaBetween(fechaInicio, fechaFin, pageable)
+                .map(ventaMapper::toResponseDTO);
+    }
+
+    // NUEVO: Filtrar por rango de total
+    public Page<VentaResponseDTO> filtrarPorRangoTotal(
+            BigDecimal min,
+            BigDecimal max,
+            int page,
+            int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "total"));
+        return ventaRepository.findByTotalBetween(min, max, pageable)
+                .map(ventaMapper::toResponseDTO);
+    }
+
+    // NUEVO: Ventas del día
+    public List<VentaResponseDTO> ventasDelDia(LocalDate fecha) {
+        return ventaRepository.findByFecha(fecha).stream()
+                .map(ventaMapper::toResponseDTO)
+                .collect(Collectors.toList());
+    }
+
+    // NUEVO: Estadísticas de ventas por rango
+    public Map<String, Object> obtenerEstadisticas(LocalDate fechaInicio, LocalDate fechaFin) {
+        BigDecimal total = ventaRepository.calcularTotalVentasPorRango(fechaInicio, fechaFin);
+        List<Object[]> ventasPorTipo = ventaRepository.contarVentasPorTipoPago();
+
+        Map<String, Object> estadisticas = new HashMap<>();
+        estadisticas.put("totalVentas", total != null ? total : BigDecimal.ZERO);
+        estadisticas.put("fechaInicio", fechaInicio);
+        estadisticas.put("fechaFin", fechaFin);
+
+        Map<String, Long> ventasPorTipoPago = new HashMap<>();
+        for (Object[] row : ventasPorTipo) {
+            ventasPorTipoPago.put((String) row[0], (Long) row[1]);
+        }
+        estadisticas.put("ventasPorTipoPago", ventasPorTipoPago);
+
+        return estadisticas;
+    }
+
+    public VentaResponseDTO buscarPorId(Integer idVenta) {
+        Venta venta = ventaRepository.findById(idVenta)
                 .orElseThrow(() -> new ResourceNotFoundException("Venta con ID " + idVenta + " no encontrada"));
+        return ventaMapper.toResponseDTO(venta);
     }
 
-    public Venta guardar(Venta venta) {
-        // Validar cliente existente
-        Cliente cliente = clienteRepository.findById(venta.getCliente().getCedula())
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Cliente con cédula " + venta.getCliente().getCedula() + " no encontrado"));
-        venta.setCliente(cliente);
-
-        // NUEVO: Validar cotización si viene en la petición
-        if (venta.getCotizacion() != null && venta.getCotizacion().getIdCotizacion() != null) {
-            Cotizacion cotizacion = cotizacionRepository.findById(venta.getCotizacion().getIdCotizacion())
-                    .orElseThrow(() -> new ResourceNotFoundException(
-                            "Cotización con ID " + venta.getCotizacion().getIdCotizacion() + " no encontrada"));
-            venta.setCotizacion(cotizacion);
-        }
-
-        if (venta.getTotal() == null) {
-            venta.setTotal(BigDecimal.ZERO);
-        }
-
-        // Establecer la relación bidireccional con los detalles
-        if (venta.getDetalles() != null) {
-            venta.getDetalles().forEach(detalle -> {
-                detalle.setVenta(venta);
-                if (detalle.getDescripcionProducto() == null && detalle.getProducto() != null) {
-                    detalle.setDescripcionProducto(detalle.getProducto().getDescripcion());
-                }
-            });
-        }
-
-        return ventaRepository.save(venta);
+    public VentaResponseDTO guardar(VentaRequestDTO ventaDTO) {
+        Venta venta = ventaMapper.toEntity(ventaDTO);
+        Venta ventaGuardada = ventaRepository.save(venta);
+        return ventaMapper.toResponseDTO(ventaGuardada);
     }
 
-    public Venta actualizar(Integer idVenta, Venta ventaActualizada) {
-        Venta ventaExistente = buscarPorId(idVenta);
+    public VentaResponseDTO actualizar(Integer idVenta, VentaRequestDTO ventaDTO) {
+        Venta ventaExistente = ventaRepository.findById(idVenta)
+                .orElseThrow(() -> new ResourceNotFoundException("Venta con ID " + idVenta + " no encontrada"));
 
-        ventaExistente.setFecha(ventaActualizada.getFecha());
-        ventaExistente.setTotal(ventaActualizada.getTotal());
-        ventaExistente.setNombre(ventaActualizada.getNombre());
-        ventaExistente.setTipoPago(ventaActualizada.getTipoPago());
+        ventaExistente.getDetalles().clear();
 
-        // NUEVO: Validar cotización si se actualiza
-        if (ventaActualizada.getCotizacion() != null && ventaActualizada.getCotizacion().getIdCotizacion() != null) {
-            Cotizacion cotizacion = cotizacionRepository.findById(ventaActualizada.getCotizacion().getIdCotizacion())
-                    .orElseThrow(() -> new ResourceNotFoundException(
-                            "Cotización con ID " + ventaActualizada.getCotizacion().getIdCotizacion() + " no encontrada"));
-            ventaExistente.setCotizacion(cotizacion);
-        }
+        Venta ventaNueva = ventaMapper.toEntity(ventaDTO);
+        ventaExistente.setCliente(ventaNueva.getCliente());
+        ventaExistente.setNombre(ventaNueva.getNombre());
+        ventaExistente.setCotizacion(ventaNueva.getCotizacion());
+        ventaExistente.setFecha(ventaNueva.getFecha());
+        ventaExistente.setTotal(ventaNueva.getTotal());
+        ventaExistente.setTipoPago(ventaNueva.getTipoPago());
 
-        if (ventaActualizada.getCliente() != null) {
-            Cliente cliente = clienteRepository.findById(ventaActualizada.getCliente().getCedula())
-                    .orElseThrow(() -> new ResourceNotFoundException(
-                            "Cliente con cédula " + ventaActualizada.getCliente().getCedula() + " no encontrado"));
-            ventaExistente.setCliente(cliente);
-        }
+        ventaNueva.getDetalles().forEach(detalle -> {
+            detalle.setVenta(ventaExistente);
+            ventaExistente.getDetalles().add(detalle);
+        });
 
-        // Actualizar detalles si vienen en la petición
-        if (ventaActualizada.getDetalles() != null) {
-            ventaExistente.getDetalles().clear();
-
-            ventaActualizada.getDetalles().forEach(detalle -> {
-                detalle.setVenta(ventaExistente);
-                if (detalle.getDescripcionProducto() == null && detalle.getProducto() != null) {
-                    detalle.setDescripcionProducto(detalle.getProducto().getDescripcion());
-                }
-                ventaExistente.getDetalles().add(detalle);
-            });
-        }
-
-        return ventaRepository.save(ventaExistente);
+        Venta ventaActualizada = ventaRepository.save(ventaExistente);
+        return ventaMapper.toResponseDTO(ventaActualizada);
     }
 
     public void eliminar(Integer idVenta) {
-        Venta venta = buscarPorId(idVenta);
+        Venta venta = ventaRepository.findById(idVenta)
+                .orElseThrow(() -> new ResourceNotFoundException("Venta con ID " + idVenta + " no encontrada"));
         ventaRepository.delete(venta);
     }
 }

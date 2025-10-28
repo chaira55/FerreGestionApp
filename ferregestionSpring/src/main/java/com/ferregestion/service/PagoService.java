@@ -1,48 +1,57 @@
 package com.ferregestion.service;
 
+import com.ferregestion.dto.request.PagoRequestDTO;
+import com.ferregestion.dto.response.PagoResponseDTO;
 import com.ferregestion.entity.Pago;
 import com.ferregestion.exception.ResourceNotFoundException;
+import com.ferregestion.mapper.PagoMapper;
 import com.ferregestion.repository.PagoRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class PagoService {
 
     private final PagoRepository pagoRepository;
+    private final PagoMapper pagoMapper;
 
-    public PagoService(PagoRepository pagoRepository) {
+    public PagoService(PagoRepository pagoRepository, PagoMapper pagoMapper) {
         this.pagoRepository = pagoRepository;
+        this.pagoMapper = pagoMapper;
     }
 
-    public List<Pago> listarTodos() {
-        return pagoRepository.findAll();
+    public List<PagoResponseDTO> listarTodos() {
+        return pagoRepository.findAll().stream()
+                .map(pagoMapper::toResponseDTO)
+                .collect(Collectors.toList());
     }
 
-    public Pago buscarPorId(Integer id) {
-        return pagoRepository.findById(id)
+    public PagoResponseDTO buscarPorId(Integer id) {
+        Pago pago = pagoRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Pago con ID " + id + " no encontrado"));
+        return pagoMapper.toResponseDTO(pago);
     }
 
-    public Pago guardar(Pago pago) {
-        return pagoRepository.save(pago);
+    public PagoResponseDTO guardar(PagoRequestDTO pagoDTO) {
+        Pago pago = pagoMapper.toEntity(pagoDTO);
+        Pago pagoGuardado = pagoRepository.save(pago);
+        return pagoMapper.toResponseDTO(pagoGuardado);
     }
 
-    public Pago actualizar(Integer id, Pago pagoActualizado) {
-        Pago pagoExistente = buscarPorId(id);
+    public PagoResponseDTO actualizar(Integer id, PagoRequestDTO pagoDTO) {
+        Pago pagoExistente = pagoRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Pago con ID " + id + " no encontrado"));
 
-        pagoExistente.setCredito(pagoActualizado.getCredito());
-        pagoExistente.setCliente(pagoActualizado.getCliente());
-        pagoExistente.setNombre(pagoActualizado.getNombre());
-        pagoExistente.setFechaPago(pagoActualizado.getFechaPago());
-        pagoExistente.setMonto(pagoActualizado.getMonto());  // CAMBIO: getValor() → getMonto()
-
-        return pagoRepository.save(pagoExistente);
+        pagoMapper.updateEntityFromDTO(pagoDTO, pagoExistente);
+        Pago pagoActualizado = pagoRepository.save(pagoExistente);
+        return pagoMapper.toResponseDTO(pagoActualizado);
     }
 
     public void eliminar(Integer id) {
-        Pago pago = buscarPorId(id);
+        Pago pago = pagoRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Pago con ID " + id + " no encontrado"));
         pagoRepository.delete(pago);
     }
 }

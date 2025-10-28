@@ -1,7 +1,11 @@
 package com.ferregestion.controller;
 
-import com.ferregestion.entity.Pago;
+import com.ferregestion.dto.request.PagoRequestDTO;
+import com.ferregestion.dto.response.PagoResponseDTO;
 import com.ferregestion.service.PagoService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -10,6 +14,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/pagos")
+@Tag(name = "Pagos", description = "API para gestión de pagos")
 public class PagoController {
 
     private final PagoService pagoService;
@@ -18,32 +23,34 @@ public class PagoController {
         this.pagoService = pagoService;
     }
 
-    // Listar todos los pagos
+    @Operation(summary = "Listar todos los pagos")
     @GetMapping
-    public List<Pago> listarTodos() {
-        return pagoService.listarTodos();
+    public ResponseEntity<List<PagoResponseDTO>> listarTodos() {
+        return ResponseEntity.ok(pagoService.listarTodos());
     }
 
-    // Buscar pago por ID
+    @Operation(summary = "Buscar pago por ID")
     @GetMapping("/{id}")
-    public Pago buscarPorId(@PathVariable Integer id) {
-        return pagoService.buscarPorId(id);
+    public ResponseEntity<PagoResponseDTO> buscarPorId(@PathVariable Integer id) {
+        return ResponseEntity.ok(pagoService.buscarPorId(id));
     }
 
-    // Crear nuevo pago
+    @Operation(summary = "Crear nuevo pago")
     @PostMapping
-    public ResponseEntity<Pago> crear(@RequestBody Pago pago) {
-        Pago nuevoPago = pagoService.guardar(pago);
+    public ResponseEntity<PagoResponseDTO> crear(@Valid @RequestBody PagoRequestDTO pagoDTO) {
+        PagoResponseDTO nuevoPago = pagoService.guardar(pagoDTO);
         return new ResponseEntity<>(nuevoPago, HttpStatus.CREATED);
     }
 
-    // Actualizar pago existente
+    @Operation(summary = "Actualizar pago existente")
     @PutMapping("/{id}")
-    public Pago actualizar(@PathVariable Integer id, @RequestBody Pago pagoActualizado) {
-        return pagoService.actualizar(id, pagoActualizado);
+    public ResponseEntity<PagoResponseDTO> actualizar(
+            @PathVariable Integer id,
+            @Valid @RequestBody PagoRequestDTO pagoDTO) {
+        return ResponseEntity.ok(pagoService.actualizar(id, pagoDTO));
     }
 
-    // Eliminar pago
+    @Operation(summary = "Eliminar pago")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminar(@PathVariable Integer id) {
         pagoService.eliminar(id);
