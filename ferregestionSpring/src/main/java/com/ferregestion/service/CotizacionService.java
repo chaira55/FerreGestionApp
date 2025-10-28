@@ -6,6 +6,8 @@ import com.ferregestion.exception.ResourceNotFoundException;
 import com.ferregestion.repository.CotizacionRepository;
 import com.ferregestion.repository.ClienteRepository;
 import org.springframework.stereotype.Service;
+
+import java.math.BigDecimal;
 import java.util.List;
 
 @Service
@@ -29,12 +31,26 @@ public class CotizacionService {
     }
 
     public Cotizacion guardar(Cotizacion cotizacion) {
-        // Validar cliente existente
         Cliente cliente = clienteRepository.findById(cotizacion.getCliente().getCedula())
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Cliente con cédula " + cotizacion.getCliente().getCedula() + " no encontrado"));
 
         cotizacion.setCliente(cliente);
+
+        if (cotizacion.getTotal() == null) {
+            cotizacion.setTotal(BigDecimal.ZERO);
+        }
+
+        // NUEVO: Establecer la relación bidireccional con los detalles
+        if (cotizacion.getDetalles() != null) {
+            cotizacion.getDetalles().forEach(detalle -> {
+                detalle.setCotizacion(cotizacion);
+                // Copiar descripción del producto si no viene en el JSON
+                if (detalle.getDescripcionProducto() == null && detalle.getProducto() != null) {
+                    detalle.setDescripcionProducto(detalle.getProducto().getDescripcion());
+                }
+            });
+        }
 
         return cotizacionRepository.save(cotizacion);
     }
@@ -44,14 +60,28 @@ public class CotizacionService {
 
         cotizacionExistente.setFecha(cotizacionActualizada.getFecha());
         cotizacionExistente.setTotal(cotizacionActualizada.getTotal());
-        cotizacionExistente.setNombre(cotizacionActualizada.getNombre());  // NUEVO
+        cotizacionExistente.setNombre(cotizacionActualizada.getNombre());
 
-        // Validar cliente actualizado si cambia
         if (cotizacionActualizada.getCliente() != null) {
             Cliente cliente = clienteRepository.findById(cotizacionActualizada.getCliente().getCedula())
                     .orElseThrow(() -> new ResourceNotFoundException(
                             "Cliente con cédula " + cotizacionActualizada.getCliente().getCedula() + " no encontrado"));
             cotizacionExistente.setCliente(cliente);
+        }
+
+        // NUEVO: Actualizar detalles si vienen en la petición
+        if (cotizacionActualizada.getDetalles() != null) {
+            // Eliminar detalles antiguos
+            cotizacionExistente.getDetalles().clear();
+
+            // Agregar nuevos detalles
+            cotizacionActualizada.getDetalles().forEach(detalle -> {
+                detalle.setCotizacion(cotizacionExistente);
+                if (detalle.getDescripcionProducto() == null && detalle.getProducto() != null) {
+                    detalle.setDescripcionProducto(detalle.getProducto().getDescripcion());
+                }
+                cotizacionExistente.getDetalles().add(detalle);
+            });
         }
 
         return cotizacionRepository.save(cotizacionExistente);

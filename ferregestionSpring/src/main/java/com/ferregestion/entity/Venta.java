@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -30,25 +31,23 @@ public class Venta {
 
     @ManyToOne
     @JoinColumn(name = "id_cotizacion")
-    private Cotizacion cotizacion;  // NUEVO: Relación opcional con cotización
+    private Cotizacion cotizacion;
 
     @NotNull(message = "La fecha de venta es obligatoria")
     @Column(name = "fecha", nullable = false)
-    private LocalDate fecha;  // CAMBIO: LocalDateTime → LocalDate
+    private LocalDate fecha;
 
     @NotNull(message = "El total es obligatorio")
     @Column(name = "total", nullable = false, precision = 12, scale = 2)
-    private Double total;
+    private BigDecimal total = BigDecimal.ZERO;
 
     @NotNull(message = "El tipo de pago es obligatorio")
     @Column(name = "tipo_pago", nullable = false, length = 20)
-    private String tipoPago;  // NUEVO: Campo obligatorio
+    private String tipoPago;
 
-    // Relación con DetalleVenta
     @OneToMany(mappedBy = "venta", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<DetalleVenta> detalles;
 
-    // NUEVO: Relación bidireccional con Credito (opcional)
     @OneToOne(mappedBy = "venta", cascade = CascadeType.ALL)
     private Credito credito;
 }

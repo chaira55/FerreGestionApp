@@ -20,27 +20,29 @@ public class PagoService {
         return pagoRepository.findAll();
     }
 
-    public Pago buscarPorId(Integer idPago) {
-        return pagoRepository.findById(idPago)
-                .orElseThrow(() -> new ResourceNotFoundException("Pago con ID " + idPago + " no encontrado"));
+    public Pago buscarPorId(Integer id) {
+        return pagoRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Pago con ID " + id + " no encontrado"));
     }
 
     public Pago guardar(Pago pago) {
         return pagoRepository.save(pago);
     }
 
-    public Pago actualizar(Integer idPago, Pago pagoActualizado) {
-        Pago pagoExistente = buscarPorId(idPago);
-        pagoExistente.setCliente(pagoActualizado.getCliente());
+    public Pago actualizar(Integer id, Pago pagoActualizado) {
+        Pago pagoExistente = buscarPorId(id);
+
         pagoExistente.setCredito(pagoActualizado.getCredito());
-        pagoExistente.setValor(pagoActualizado.getValor());
-        pagoExistente.setFecha(pagoActualizado.getFecha());
-        pagoExistente.setEstado(pagoActualizado.getEstado());
+        pagoExistente.setCliente(pagoActualizado.getCliente());
+        pagoExistente.setNombre(pagoActualizado.getNombre());
+        pagoExistente.setFechaPago(pagoActualizado.getFechaPago());
+        pagoExistente.setMonto(pagoActualizado.getMonto());  // CAMBIO: getValor() → getMonto()
+
         return pagoRepository.save(pagoExistente);
     }
 
-    public void eliminar(Integer idPago) {
-        Pago pago = buscarPorId(idPago);
+    public void eliminar(Integer id) {
+        Pago pago = buscarPorId(id);
         pagoRepository.delete(pago);
     }
 }

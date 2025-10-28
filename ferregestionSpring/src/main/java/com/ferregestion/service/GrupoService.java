@@ -5,6 +5,7 @@ import com.ferregestion.exception.ResourceNotFoundException;
 import com.ferregestion.repository.GrupoRepository;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Service
@@ -20,29 +21,26 @@ public class GrupoService {
         return grupoRepository.findAll();
     }
 
-    public Grupo buscarPorId(String codigoGrupo) {  // CAMBIO: Integer → String
+    public Grupo buscarPorId(String codigoGrupo) {
         return grupoRepository.findById(codigoGrupo)
                 .orElseThrow(() -> new ResourceNotFoundException("Grupo con código " + codigoGrupo + " no encontrado"));
     }
 
     public Grupo guardar(Grupo grupo) {
-        // Asegurar que el IVA tenga valor por defecto si no se proporciona
         if (grupo.getIva() == null) {
-            grupo.setIva(19.00);
+            grupo.setIva(new BigDecimal("19.00"));
         }
         return grupoRepository.save(grupo);
     }
 
-    public Grupo actualizar(String codigoGrupo, Grupo grupoActualizado) {  // CAMBIO: Integer → String
+    public Grupo actualizar(String codigoGrupo, Grupo grupoActualizado) {
         Grupo grupoExistente = buscarPorId(codigoGrupo);
         grupoExistente.setNombre(grupoActualizado.getNombre());
-        grupoExistente.setIva(grupoActualizado.getIva());  // NUEVO
-        // ELIMINADO: setDescripcion
-        // ELIMINADO: setClase
+        grupoExistente.setIva(grupoActualizado.getIva());
         return grupoRepository.save(grupoExistente);
     }
 
-    public void eliminar(String codigoGrupo) {  // CAMBIO: Integer → String
+    public void eliminar(String codigoGrupo) {
         Grupo grupo = buscarPorId(codigoGrupo);
         grupoRepository.delete(grupo);
     }

@@ -1,5 +1,6 @@
 package com.ferregestion.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -24,9 +25,8 @@ public class Clase {
     @Column(name = "nombre", nullable = false, unique = true, length = 100)
     private String nombre;
 
-    // ELIMINADO: descripcion (no existe en la BD)
-
     // Relación con Producto (no con Grupo)
     @OneToMany(mappedBy = "clase", cascade = CascadeType.ALL)
+    @JsonIgnore
     private List<Producto> productos;  // CAMBIO: grupos → productos
 }

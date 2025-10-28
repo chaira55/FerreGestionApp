@@ -3,6 +3,9 @@ package com.ferregestion.entity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;  // NUEVO IMPORT
+
+import java.math.BigDecimal;
 
 @Entity
 @Table(name = "credito")
@@ -18,8 +21,9 @@ public class Credito {
     private Integer idCredito;
 
     @NotNull
-    @OneToOne  // CAMBIO: De Integer a relación OneToOne
+    @OneToOne
     @JoinColumn(name = "id_venta", nullable = false, unique = true)
+    @JsonIgnore  // NUEVO: Evita el ciclo infinito
     private Venta venta;
 
     @NotNull
@@ -30,11 +34,13 @@ public class Credito {
     @Column(name = "nombre", length = 100)
     private String nombre;
 
+    @NotNull
     @Column(name = "monto_total", nullable = false, precision = 12, scale = 2)
-    private Double montoTotal;
+    private BigDecimal montoTotal;
 
+    @NotNull
     @Column(name = "saldo_pendiente", nullable = false, precision = 12, scale = 2)
-    private Double saldoPendiente;
+    private BigDecimal saldoPendiente;
 
     @Column(name = "estado", length = 50)
     private String estado;

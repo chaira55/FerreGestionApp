@@ -30,7 +30,7 @@ public class CreditoService {
     public Credito actualizar(Integer id, Credito creditoActualizado) {
         return creditoRepository.findById(id)
                 .map(credito -> {
-                    credito.setVenta(creditoActualizado.getVenta()); // CAMBIO: setIdVenta → setVenta
+                    credito.setVenta(creditoActualizado.getVenta());
                     credito.setCliente(creditoActualizado.getCliente());
                     credito.setNombre(creditoActualizado.getNombre());
                     credito.setMontoTotal(creditoActualizado.getMontoTotal());

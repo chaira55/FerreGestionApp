@@ -5,6 +5,7 @@ import com.ferregestion.exception.ResourceNotFoundException;
 import com.ferregestion.repository.ProductoRepository;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Service
@@ -26,15 +27,14 @@ public class ProductoService {
     }
 
     public Producto guardar(Producto producto) {
-        // Asegurar valores por defecto
         if (producto.getIva() == null) {
-            producto.setIva(19.00);
+            producto.setIva(new BigDecimal("19.00"));
         }
         if (producto.getPrecioCompra() == null) {
-            producto.setPrecioCompra(0.00);
+            producto.setPrecioCompra(BigDecimal.ZERO);
         }
         if (producto.getPrecioVenta() == null) {
-            producto.setPrecioVenta(0.00);
+            producto.setPrecioVenta(BigDecimal.ZERO);
         }
         if (producto.getStock() == null) {
             producto.setStock(0);
@@ -44,12 +44,12 @@ public class ProductoService {
 
     public Producto actualizar(Integer id, Producto actualizado) {
         Producto p = buscarPorId(id);
-        p.setDescripcion(actualizado.getDescripcion());  // CAMBIO: nombre → descripcion
-        p.setClase(actualizado.getClase());  // NUEVO
-        p.setGrupo(actualizado.getGrupo());  // NUEVO
-        p.setIva(actualizado.getIva());  // NUEVO
-        p.setPrecioCompra(actualizado.getPrecioCompra());  // NUEVO
-        p.setPrecioVenta(actualizado.getPrecioVenta());  // CAMBIO: precio → precioVenta
+        p.setDescripcion(actualizado.getDescripcion());
+        p.setClase(actualizado.getClase());
+        p.setGrupo(actualizado.getGrupo());
+        p.setIva(actualizado.getIva());
+        p.setPrecioCompra(actualizado.getPrecioCompra());
+        p.setPrecioVenta(actualizado.getPrecioVenta());
         p.setStock(actualizado.getStock());
         return productoRepository.save(p);
     }
@@ -59,9 +59,6 @@ public class ProductoService {
         productoRepository.delete(p);
     }
 
-    /**
-     * Reduce el stock del producto en la cantidad indicada.
-     */
     public void reducirStock(Integer productoId, int cantidad) {
         Producto p = buscarPorId(productoId);
         if (p.getStock() < cantidad) {
@@ -72,9 +69,6 @@ public class ProductoService {
         productoRepository.save(p);
     }
 
-    /**
-     * Aumenta stock (útil para reversar ventas).
-     */
     public void aumentarStock(Integer productoId, int cantidad) {
         Producto p = buscarPorId(productoId);
         p.setStock(p.getStock() + cantidad);
