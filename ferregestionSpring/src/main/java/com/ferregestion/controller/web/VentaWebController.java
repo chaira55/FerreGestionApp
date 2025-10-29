@@ -1,8 +1,10 @@
 package com.ferregestion.controller.web;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ferregestion.dto.request.VentaRequestDTO;
 import com.ferregestion.dto.request.DetalleVentaRequestDTO;
 import com.ferregestion.dto.response.VentaResponseDTO;
+import com.ferregestion.dto.response.ClienteResponseDTO;
 import com.ferregestion.service.ClienteService;
 import com.ferregestion.service.ProductoService;
 import com.ferregestion.service.VentaService;
@@ -24,13 +26,16 @@ public class VentaWebController {
     private final VentaService ventaService;
     private final ClienteService clienteService;
     private final ProductoService productoService;
+    private final ObjectMapper objectMapper;
 
     public VentaWebController(VentaService ventaService,
                               ClienteService clienteService,
-                              ProductoService productoService) {
+                              ProductoService productoService,
+                              ObjectMapper objectMapper) {
         this.ventaService = ventaService;
         this.clienteService = clienteService;
         this.productoService = productoService;
+        this.objectMapper = objectMapper;
     }
 
     @GetMapping
@@ -42,7 +47,17 @@ public class VentaWebController {
     @GetMapping("/nueva")
     public String mostrarFormularioNuevo(Model model) {
         model.addAttribute("venta", new VentaRequestDTO());
-        model.addAttribute("clientes", clienteService.listarTodos());
+
+        // Pasar clientes como JSON
+        List<ClienteResponseDTO> clientes = clienteService.listarTodos();
+        try {
+            String clientesJson = objectMapper.writeValueAsString(clientes);
+            model.addAttribute("clientesJson", clientesJson);
+        } catch (Exception e) {
+            System.err.println("Error al serializar clientes: " + e.getMessage());
+            model.addAttribute("clientesJson", "[]");
+        }
+
         model.addAttribute("productos", productoService.listarTodos());
         return "ventas/formulario";
     }
@@ -70,7 +85,7 @@ public class VentaWebController {
 
             // Construir DTO manualmente
             VentaRequestDTO ventaDTO = new VentaRequestDTO();
-            ventaDTO.setCedula(cedula);  // Usa setCedulaCliente pero recibe "cedula"
+            ventaDTO.setCedula(cedula);
             ventaDTO.setFecha(fecha);
             ventaDTO.setTipoPago(tipoPago);
             ventaDTO.setTotal(total);
@@ -79,9 +94,9 @@ public class VentaWebController {
             List<DetalleVentaRequestDTO> detalles = new ArrayList<>();
             int index = 0;
 
-            while (allParams.containsKey("detalles[" + index + "].productoId")) {
+            while (allParams.containsKey("detalles[" + index + "].idProducto")) {
                 try {
-                    String productoIdStr = allParams.get("detalles[" + index + "].productoId");
+                    String productoIdStr = allParams.get("detalles[" + index + "].idProducto");
                     String cantidadStr = allParams.get("detalles[" + index + "].cantidad");
                     String precioStr = allParams.get("detalles[" + index + "].precioUnitario");
 
@@ -91,7 +106,7 @@ public class VentaWebController {
 
                     if (productoIdStr != null && cantidadStr != null && precioStr != null) {
                         DetalleVentaRequestDTO detalle = new DetalleVentaRequestDTO();
-                        detalle.setIdProducto(Integer.parseInt(productoIdStr.trim()));  // ✅ CAMBIADO
+                        detalle.setIdProducto(Integer.parseInt(productoIdStr.trim()));
                         detalle.setCantidad(Integer.parseInt(cantidadStr.trim()));
                         detalle.setPrecioUnitario(new BigDecimal(precioStr.trim()));
                         detalles.add(detalle);
@@ -111,7 +126,16 @@ public class VentaWebController {
             // Validaciones
             if (detalles.isEmpty()) {
                 model.addAttribute("error", "Debe agregar al menos un producto");
-                model.addAttribute("clientes", clienteService.listarTodos());
+
+                // Recargar datos
+                List<ClienteResponseDTO> clientes = clienteService.listarTodos();
+                try {
+                    String clientesJson = objectMapper.writeValueAsString(clientes);
+                    model.addAttribute("clientesJson", clientesJson);
+                } catch (Exception ex) {
+                    model.addAttribute("clientesJson", "[]");
+                }
+
                 model.addAttribute("productos", productoService.listarTodos());
                 return "ventas/formulario";
             }
@@ -129,7 +153,16 @@ public class VentaWebController {
             e.printStackTrace();
 
             model.addAttribute("error", e.getMessage());
-            model.addAttribute("clientes", clienteService.listarTodos());
+
+            // Recargar datos
+            List<ClienteResponseDTO> clientes = clienteService.listarTodos();
+            try {
+                String clientesJson = objectMapper.writeValueAsString(clientes);
+                model.addAttribute("clientesJson", clientesJson);
+            } catch (Exception ex) {
+                model.addAttribute("clientesJson", "[]");
+            }
+
             model.addAttribute("productos", productoService.listarTodos());
             return "ventas/formulario";
 
@@ -138,7 +171,16 @@ public class VentaWebController {
             e.printStackTrace();
 
             model.addAttribute("error", "Error al guardar: " + e.getMessage());
-            model.addAttribute("clientes", clienteService.listarTodos());
+
+            // Recargar datos
+            List<ClienteResponseDTO> clientes = clienteService.listarTodos();
+            try {
+                String clientesJson = objectMapper.writeValueAsString(clientes);
+                model.addAttribute("clientesJson", clientesJson);
+            } catch (Exception ex) {
+                model.addAttribute("clientesJson", "[]");
+            }
+
             model.addAttribute("productos", productoService.listarTodos());
             return "ventas/formulario";
         }

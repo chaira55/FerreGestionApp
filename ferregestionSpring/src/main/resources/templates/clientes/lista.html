@@ -28,21 +28,21 @@
 
     <!-- Buscador -->
     <div class="row mb-3">
-        <div class="col-md-6">
+        <div class="col-md-8">
             <div class="input-group">
-                    <span class="input-group-text">
-                        <i class="bi bi-search"></i>
-                    </span>
+                <span class="input-group-text">
+                    <i class="bi bi-search"></i>
+                </span>
                 <input type="text"
-                       id="buscarCliente"
                        class="form-control"
-                       placeholder="Buscar por cédula, nombre, correo...">
+                       id="buscarCliente"
+                       placeholder="Buscar por cédula, nombre, celular o correo...">
             </div>
         </div>
-        <div class="col-md-6 text-end">
-                <span class="badge bg-info text-dark fs-6">
-                    Total: <span th:text="${clientes.size()}">0</span> clientes
-                </span>
+        <div class="col-md-4 text-end">
+            <span class="badge bg-success fs-5">
+                Total clientes: <span id="totalClientes" th:text="${clientes.size()}">0</span>
+            </span>
         </div>
     </div>
 
@@ -50,58 +50,59 @@
     <div class="card">
         <div class="card-body">
             <div class="table-responsive">
-                <table class="table table-hover" id="tablaClientes">
+                <table class="table table-hover">
                     <thead class="table-light">
                     <tr>
                         <th>Cédula</th>
                         <th>Nombre</th>
-                        <th>Celular</th>
-                        <th>Correo</th>
-                        <th>Dirección</th>
+                        <th>Teléfono</th>
+                        <th>Email</th>
                         <th class="text-center">Acciones</th>
                     </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="tablaClientes">
                     <tr th:each="cliente : ${clientes}">
                         <td th:text="${cliente.cedula}">123456789</td>
                         <td th:text="${cliente.nombre}">Juan Pérez</td>
-                        <td>
-                            <i class="bi bi-phone"></i>
-                            <span th:text="${cliente.celular ?: 'N/A'}">3001234567</span>
-                        </td>
-                        <td>
-                            <i class="bi bi-envelope"></i>
-                            <span th:text="${cliente.correo ?: 'N/A'}">correo@ejemplo.com</span>
-                        </td>
-                        <td th:text="${cliente.direccion ?: 'N/A'}">Calle 123 #45-67</td>
+                        <td th:text="${cliente.celular}">555-1234</td>
+                        <td th:text="${cliente.correo}">juan@example.com</td>
                         <td class="text-center">
-                            <div class="btn-group" role="group">
-                                <a th:href="@{/web/clientes/ver/{cedula}(cedula=${cliente.cedula})}"
-                                   class="btn btn-sm btn-info text-white"
-                                   title="Ver detalle">
-                                    <i class="bi bi-eye"></i>
-                                </a>
-                                <a th:href="@{/web/clientes/editar/{cedula}(cedula=${cliente.cedula})}"
-                                   class="btn btn-sm btn-warning"
-                                   title="Editar">
-                                    <i class="bi bi-pencil"></i>
-                                </a>
-                                <a th:href="@{/web/clientes/eliminar/{cedula}(cedula=${cliente.cedula})}"
-                                   class="btn btn-sm btn-danger"
-                                   onclick="return confirm('¿Está seguro de eliminar este cliente?')"
-                                   title="Eliminar">
-                                    <i class="bi bi-trash"></i>
-                                </a>
-                            </div>
+                            <!-- Botón Ver -->
+                            <a th:href="@{/web/clientes/ver/{id}(id=${cliente.cedula})}"
+                               class="btn btn-sm btn-info text-white"
+                               title="Ver detalle">
+                                <i class="bi bi-eye"></i>
+                            </a>
+
+                            <!-- Botón Editar -->
+                            <a th:href="@{/web/clientes/editar/{id}(id=${cliente.cedula})}"
+                               class="btn btn-sm btn-warning text-white"
+                               title="Editar">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+
+                            <!-- Botón Eliminar -->
+                            <a th:href="@{/web/clientes/eliminar/{id}(id=${cliente.cedula})}"
+                               class="btn btn-sm btn-danger"
+                               onclick="return confirm('¿Está seguro de eliminar este cliente?')"
+                               title="Eliminar">
+                                <i class="bi bi-trash"></i>
+                            </a>
                         </td>
                     </tr>
                     </tbody>
                 </table>
             </div>
 
+            <!-- Mensaje cuando no hay resultados -->
+            <div id="sinResultadosClientes" class="text-center py-5" style="display: none;">
+                <i class="bi bi-search display-1 text-muted"></i>
+                <p class="text-muted mt-3">No se encontraron clientes</p>
+            </div>
+
             <!-- Mensaje si no hay clientes -->
             <div th:if="${clientes.empty}" class="text-center py-5">
-                <i class="bi bi-inbox fs-1 text-muted"></i>
+                <i class="bi bi-inbox display-1 text-muted"></i>
                 <p class="text-muted mt-3">No hay clientes registrados</p>
                 <a th:href="@{/web/clientes/nuevo}" class="btn btn-primary">
                     <i class="bi bi-plus-circle"></i> Crear primer cliente
@@ -115,8 +116,34 @@
 <div th:replace="fragments/footer :: scripts"></div>
 
 <script>
-    // Activar búsqueda en tiempo real
-    filtrarTabla('buscarCliente', 'tablaClientes');
+    document.getElementById('buscarCliente')?.addEventListener('input', function(e) {
+        const termino = e.target.value.toLowerCase().trim();
+        const tbody = document.getElementById('tablaClientes');
+        const filas = tbody.querySelectorAll('tr');
+        const tabla = tbody.closest('table');
+        const mensajeSinResultados = document.getElementById('sinResultadosClientes');
+        let contadorVisibles = 0;
+
+        filas.forEach(fila => {
+            const texto = fila.textContent.toLowerCase();
+            const visible = texto.includes(termino);
+            fila.style.display = visible ? '' : 'none';
+            if (visible) contadorVisibles++;
+        });
+
+        // Mostrar/ocultar mensaje
+        if (contadorVisibles === 0 && termino.length > 0) {
+            tabla.style.display = 'none';
+            mensajeSinResultados.style.display = 'block';
+        } else {
+            tabla.style.display = '';
+            mensajeSinResultados.style.display = 'none';
+        }
+
+        // Actualizar contador
+        document.getElementById('totalClientes').textContent = contadorVisibles;
+    });
 </script>
+
 </body>
 </html>

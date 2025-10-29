@@ -26,23 +26,23 @@
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
 
-    <!-- Buscador y filtros -->
+    <!-- Buscador -->
     <div class="row mb-3">
-        <div class="col-md-6">
+        <div class="col-md-8">
             <div class="input-group">
-                    <span class="input-group-text">
-                        <i class="bi bi-search"></i>
-                    </span>
+            <span class="input-group-text">
+                <i class="bi bi-search"></i>
+            </span>
                 <input type="text"
-                       id="buscarProducto"
                        class="form-control"
-                       placeholder="Buscar por descripción, precio...">
+                       id="buscarProducto"
+                       placeholder="Buscar por descripción, grupo o stock...">
             </div>
         </div>
-        <div class="col-md-6 text-end">
-                <span class="badge bg-info text-dark fs-6">
-                    Total: <span th:text="${productos.size()}">0</span> productos
-                </span>
+        <div class="col-md-4 text-end">
+        <span class="badge bg-success fs-5">
+            Total productos: <span id="totalProductos" th:text="${productos.size()}">0</span>
+        </span>
         </div>
     </div>
 
@@ -50,80 +50,93 @@
     <div class="card">
         <div class="card-body">
             <div class="table-responsive">
-                <table class="table table-hover" id="tablaProductos">
+                <table class="table table-hover">
                     <thead class="table-light">
                     <tr>
                         <th>ID</th>
                         <th>Descripción</th>
                         <th>Grupo</th>
-                        <th>IVA %</th>
+                        <th>Stock</th>
                         <th>Precio Compra</th>
                         <th>Precio Venta</th>
-                        <th>Stock</th>
                         <th class="text-center">Acciones</th>
                     </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="tablaProductos">  <!-- ✅ ÚNICO ID -->
                     <tr th:each="producto : ${productos}">
-                        <td th:text="${producto.idProducto}">1</td>
-                        <td th:text="${producto.descripcion}">Tornillo acero 1/4</td>
+                        <td><strong th:text="'#' + ${producto.idProducto}">#1</strong></td>
+                        <td th:text="${producto.descripcion}">Tornillo</td>
                         <td>
-                                    <span th:if="${producto.grupo != null}"
-                                          th:text="${producto.grupo.nombre}"
-                                          class="badge bg-info text-dark">
-                                        Grupo
-                                    </span>
-                            <span th:unless="${producto.grupo != null}" class="text-muted">N/A</span>
+                <span th:if="${producto.grupo != null}"
+                      th:text="${producto.grupo.nombre}"
+                      class="badge bg-info">
+                    Grupo
+                </span>
                         </td>
-                        <td th:text="${producto.iva} + '%'">19%</td>
-                        <td th:text="${'$' + #numbers.formatDecimal(producto.precioCompra, 0, 'COMMA', 0, 'POINT')}">$500</td>
-                        <td th:text="${'$' + #numbers.formatDecimal(producto.precioVenta, 0, 'COMMA', 0, 'POINT')}">$750</td>
                         <td>
-                                    <span th:if="${producto.stock < 10}"
-                                          class="badge bg-danger"
-                                          th:text="${producto.stock}">5</span>
-                            <span th:if="${producto.stock >= 10 && producto.stock < 50}"
-                                  class="badge bg-warning"
-                                  th:text="${producto.stock}">25</span>
-                            <span th:if="${producto.stock >= 50}"
-                                  class="badge bg-success"
-                                  th:text="${producto.stock}">100</span>
+                <span th:if="${producto.stock > 10}" class="badge bg-success">
+                    <span th:text="${producto.stock}">50</span> unidades
+                </span>
+                            <span th:if="${producto.stock <= 10 && producto.stock > 0}" class="badge bg-warning">
+                    <span th:text="${producto.stock}">5</span> unidades
+                </span>
+                            <span th:if="${producto.stock == 0}" class="badge bg-danger">
+                    Sin stock
+                </span>
+                        </td>
+                        <td th:text="${'$' + #numbers.formatDecimal(producto.precioCompra, 0, 'COMMA', 0, 'POINT')}">
+                            $10,000
+                        </td>
+                        <td>
+                            <strong class="text-success"
+                                    th:text="${'$' + #numbers.formatDecimal(producto.precioVenta, 0, 'COMMA', 0, 'POINT')}">
+                                $15,000
+                            </strong>
                         </td>
                         <td class="text-center">
-                            <div class="btn-group" role="group">
-                                <a th:href="@{/web/productos/ver/{id}(id=${producto.idProducto})}"
-                                   class="btn btn-sm btn-info text-white"
-                                   title="Ver detalle">
-                                    <i class="bi bi-eye"></i>
-                                </a>
-                                <a th:href="@{/web/productos/editar/{id}(id=${producto.idProducto})}"
-                                   class="btn btn-sm btn-warning"
-                                   title="Editar">
-                                    <i class="bi bi-pencil"></i>
-                                </a>
-                                <a th:href="@{/web/productos/eliminar/{id}(id=${producto.idProducto})}"
-                                   class="btn btn-sm btn-danger"
-                                   onclick="return confirm('¿Está seguro de eliminar este producto?')"
-                                   title="Eliminar">
-                                    <i class="bi bi-trash"></i>
-                                </a>
-                            </div>
+                            <!-- Botón Ver -->
+                            <a th:href="@{/web/productos/ver/{id}(id=${producto.idProducto})}"
+                               class="btn btn-sm btn-info text-white"
+                               title="Ver detalle">
+                                <i class="bi bi-eye"></i>
+                            </a>
+
+                            <!-- Botón Editar -->
+                            <a th:href="@{/web/productos/editar/{id}(id=${producto.idProducto})}"
+                               class="btn btn-sm btn-warning text-white"
+                               title="Editar">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+
+                            <!-- Botón Eliminar -->
+                            <a th:href="@{/web/productos/eliminar/{id}(id=${producto.idProducto})}"
+                               class="btn btn-sm btn-danger"
+                               onclick="return confirm('¿Está seguro de eliminar este producto?')"
+                               title="Eliminar">
+                                <i class="bi bi-trash"></i>
+                            </a>
                         </td>
                     </tr>
                     </tbody>
                 </table>
-            </div>
 
-            <!-- Mensaje si no hay productos -->
-            <div th:if="${productos.empty}" class="text-center py-5">
-                <i class="bi bi-inbox fs-1 text-muted"></i>
-                <p class="text-muted mt-3">No hay productos registrados</p>
-                <a th:href="@{/web/productos/nuevo}" class="btn btn-primary">
-                    <i class="bi bi-plus-circle"></i> Crear primer producto
-                </a>
-            </div>
+                <!-- Mensaje cuando no hay resultados -->
+                <div id="sinResultadosProductos" class="text-center py-5" style="display: none;">
+                    <i class="bi bi-search display-1 text-muted"></i>
+                    <p class="text-muted mt-3">No se encontraron productos</p>
+                </div>
+
+                <!-- Mensaje si no hay productos -->
+                <div th:if="${productos.empty}" class="text-center py-5">
+                    <i class="bi bi-inbox display-1 text-muted"></i>
+                    <p class="text-muted mt-3">No hay productos registrados</p>
+                    <a th:href="@{/web/productos/nuevo}" class="btn btn-primary">
+                        <i class="bi bi-plus-circle"></i> Crear primer producto
+                    </a>
+                </div>
         </div>
     </div>
+</div>
 
     <!-- Leyenda de stock -->
     <div class="row mt-3">
@@ -141,9 +154,35 @@
 <div th:replace="fragments/footer :: footer"></div>
 <div th:replace="fragments/footer :: scripts"></div>
 
-<script>
-    // Activar búsqueda en tiempo real
-    filtrarTabla('buscarProducto', 'tablaProductos');
-</script>
+    <script>
+        document.getElementById('buscarProducto')?.addEventListener('input', function(e) {
+            const termino = e.target.value.toLowerCase().trim();
+            const tbody = document.getElementById('tablaProductos');
+            const filas = tbody.querySelectorAll('tr');
+            const tabla = tbody.closest('table');
+            const mensajeSinResultados = document.getElementById('sinResultadosProductos');
+            let contadorVisibles = 0;
+
+            filas.forEach(fila => {
+                const texto = fila.textContent.toLowerCase();
+                const visible = texto.includes(termino);
+                fila.style.display = visible ? '' : 'none';
+                if (visible) contadorVisibles++;
+            });
+
+            // Mostrar/ocultar mensaje
+            if (contadorVisibles === 0 && termino.length > 0) {
+                tabla.style.display = 'none';
+                mensajeSinResultados.style.display = 'block';
+            } else {
+                tabla.style.display = '';
+                mensajeSinResultados.style.display = 'none';
+            }
+
+            // Actualizar contador
+            document.getElementById('totalProductos').textContent = contadorVisibles;
+        });
+    </script>
+
 </body>
 </html>

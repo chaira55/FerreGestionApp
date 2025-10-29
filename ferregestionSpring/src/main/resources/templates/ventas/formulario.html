@@ -1,6 +1,31 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head th:replace="fragments/head :: head('Nueva Venta - FerreGestión')"></head>
+<style>
+    #sugerenciasClientes {
+        background-color: white;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+    }
+
+    #sugerenciasClientes .list-group-item {
+        border-left: none;
+        border-right: none;
+        cursor: pointer;
+    }
+
+    #sugerenciasClientes .list-group-item:first-child {
+        border-top: none;
+    }
+
+    #sugerenciasClientes .list-group-item:last-child {
+        border-bottom: none;
+    }
+
+    #sugerenciasClientes .list-group-item:hover {
+        background-color: #f8f9fa;
+    }
+</style>
 <body>
 <div th:replace="fragments/navbar :: navbar"></div>
 
@@ -39,24 +64,47 @@
                         <h5 class="mb-0"><i class="bi bi-info-circle"></i> Información General</h5>
                     </div>
                     <div class="card-body">
-                        <!-- Cliente -->
+                        <!-- Cliente con búsqueda -->
                         <div class="mb-3">
-                            <label for="cedula" class="form-label">
+                            <label for="buscarCliente" class="form-label">
                                 Cliente <span class="text-danger">*</span>
                             </label>
-                            <select class="form-select" id="cedula" name="cedula" required>
-                                <option value="">Seleccione un cliente...</option>
-                                <option th:each="cliente : ${clientes}"
-                                        th:value="${cliente.cedula}"
-                                        th:text="${cliente.nombre}">
-                                    Cliente
-                                </option>
-                            </select>
+
+                            <div style="position: relative;">
+                                <input type="text"
+                                       class="form-control"
+                                       id="buscarCliente"
+                                       placeholder="Buscar por nombre o cédula..."
+                                       autocomplete="off">
+                                <input type="hidden" id="cedula" name="cedula" required>
+
+                                <!-- Lista de sugerencias -->
+                                <div id="sugerenciasClientes"
+                                     class="list-group"
+                                     style="position: absolute;
+                                            z-index: 1000;
+                                            max-height: 300px;
+                                            overflow-y: auto;
+                                            width: 100%;
+                                            display: none;
+                                            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                                            margin-top: 2px;">
+                                </div>
+                            </div>
+
                             <small class="text-muted">
                                 <a th:href="@{/web/clientes/nuevo}" target="_blank">
                                     <i class="bi bi-plus-circle"></i> Crear nuevo cliente
                                 </a>
                             </small>
+
+                            <div id="clienteSeleccionado" class="mt-2" style="display: none;">
+                                <div class="alert alert-success mb-0">
+                                    <i class="bi bi-check-circle"></i>
+                                    <strong>Cliente:</strong>
+                                    <span id="nombreClienteSeleccionado"></span>
+                                </div>
+                            </div>
                         </div>
 
                         <!-- Fecha -->
@@ -72,7 +120,7 @@
                                    required>
                         </div>
 
-                        <!-- Tipo de Pago (BOTONES BONITOS) -->
+                        <!-- Tipo de Pago (BOTONES) -->
                         <div class="mb-3">
                             <label class="form-label">
                                 Tipo de Pago <span class="text-danger">*</span>
@@ -221,17 +269,159 @@
 
 <script>
     let detalleIndex = 0;
+    let clientes = [];
+    let clienteSeleccionado = null;
+    let productosAgregados = {};
 
-    // SELECCIONAR TIPO DE PAGO
+    // ========== CARGAR CLIENTES AL INICIAR ==========
+window.addEventListener('DOMContentLoaded', async function() {
+    console.log('=== INICIANDO CARGA DE CLIENTES ===');
+
+    // MÉTODO 1: API
+    try {
+        console.log('Intentando desde /api/clientes...');
+        const response = await fetch('/api/clientes');
+        console.log('Status:', response.status);
+
+        if (response.ok) {
+            const data = await response.json();
+            console.log('Respuesta completa:', data);
+
+            // ✅ EXTRAER EL ARRAY DEL OBJETO PAGINADO
+            if (Array.isArray(data)) {
+                // Si es array directo
+                clientes = data;
+            } else if (data.content && Array.isArray(data.content)) {
+                // Si es respuesta paginada (Spring Data)
+                clientes = data.content;
+            } else {
+                // Si no se encuentra array
+                console.error('Formato inesperado:', data);
+                clientes = [];
+            }
+
+            console.log('✅ Clientes desde API:', clientes);
+        } else {
+            throw new Error('Status ' + response.status);
+        }
+    } catch (error) {
+        console.log('❌ Error API:', error);
+
+        // MÉTODO 2: JSON del modelo
+        try {
+            const clientesJsonStr = /*[[${clientesJson}]]*/ '[]';
+            console.log('JSON del modelo (primeros 200 chars):', clientesJsonStr.substring(0, 200));
+
+            const data = JSON.parse(clientesJsonStr);
+
+            // ✅ EXTRAER EL ARRAY
+            if (Array.isArray(data)) {
+                clientes = data;
+            } else if (data.content && Array.isArray(data.content)) {
+                clientes = data.content;
+            } else {
+                clientes = [];
+            }
+
+            console.log('✅ Clientes desde modelo:', clientes);
+        } catch (e) {
+            console.error('❌ Error parseando JSON:', e);
+            clientes = [];
+        }
+    }
+
+    console.log('=== CLIENTES FINALES ===');
+    console.log('Total:', clientes.length);
+    console.log('Lista:', clientes);
+
+    // Hacer clientes global para debug
+    window.clientesGlobal = clientes;
+
+    const tabla = document.getElementById('detallesTabla');
+    if (tabla && tabla.rows.length === 0) {
+        document.getElementById('mensajeVacio').style.display = 'block';
+    }
+});
+
+    // ========== BÚSQUEDA DE CLIENTES ==========
+    document.getElementById('buscarCliente')?.addEventListener('input', function(e) {
+        console.log('=== BÚSQUEDA ACTIVADA ===');
+        const termino = e.target.value.toLowerCase().trim();
+        const sugerencias = document.getElementById('sugerenciasClientes');
+
+        console.log('🔍 Buscando:', termino);
+        console.log('📋 Total clientes:', clientes.length);
+
+        if (termino.length < 2) {
+            console.log('Término muy corto');
+            sugerencias.style.display = 'none';
+            return;
+        }
+
+        // Filtrar clientes
+        const resultados = clientes.filter(cliente => {
+            const nombreMatch = cliente.nombre.toLowerCase().includes(termino);
+            const cedulaMatch = cliente.cedula.toString().includes(termino);
+            return nombreMatch || cedulaMatch;
+        });
+
+        console.log('✅ Resultados encontrados:', resultados.length);
+        console.log('Resultados:', resultados);
+
+        if (resultados.length === 0) {
+            sugerencias.innerHTML = '<div class="list-group-item">No se encontraron clientes</div>';
+            sugerencias.style.display = 'block';
+            return;
+        }
+
+        // Mostrar sugerencias
+        sugerencias.innerHTML = '';
+        resultados.slice(0, 5).forEach(cliente => {
+            const item = document.createElement('a');
+            item.className = 'list-group-item list-group-item-action';
+            item.href = '#';
+            item.style.cursor = 'pointer';
+            item.innerHTML = `
+                <strong>${cliente.nombre}</strong><br>
+                <small class="text-muted">Cédula: ${cliente.cedula}</small>
+            `;
+            item.onclick = function(e) {
+                e.preventDefault();
+                seleccionarCliente(cliente);
+            };
+            sugerencias.appendChild(item);
+        });
+
+        sugerencias.style.display = 'block';
+        console.log('✅ Sugerencias mostradas');
+    });
+
+    function seleccionarCliente(cliente) {
+        console.log('✅ Cliente seleccionado:', cliente);
+        clienteSeleccionado = cliente;
+        document.getElementById('cedula').value = cliente.cedula;
+        document.getElementById('buscarCliente').value = '';
+        document.getElementById('sugerenciasClientes').style.display = 'none';
+
+        document.getElementById('nombreClienteSeleccionado').textContent =
+            `${cliente.nombre} - ${cliente.cedula}`;
+        document.getElementById('clienteSeleccionado').style.display = 'block';
+    }
+
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('#buscarCliente') && !e.target.closest('#sugerenciasClientes')) {
+            document.getElementById('sugerenciasClientes').style.display = 'none';
+        }
+    });
+
+    // ========== TIPO DE PAGO ==========
     function seleccionarPago(tipo, boton) {
-        // Remover selección de todos los botones
         document.querySelectorAll('.btn-pago').forEach(btn => {
             btn.classList.remove('active');
             btn.classList.add('btn-outline-success', 'btn-outline-primary', 'btn-outline-info', 'btn-outline-warning');
             btn.classList.remove('btn-success', 'btn-primary', 'btn-info', 'btn-warning');
         });
 
-        // Marcar el botón seleccionado
         boton.classList.add('active');
         boton.classList.remove('btn-outline-success', 'btn-outline-primary', 'btn-outline-info', 'btn-outline-warning');
 
@@ -245,10 +435,10 @@
             boton.classList.add('btn-warning');
         }
 
-        // Guardar el valor
         document.getElementById('tipoPago').value = tipo;
     }
 
+    // ========== AGREGAR PRODUCTO CON CONTROL DE STOCK ==========
     function agregarDetalle() {
         const productoSelect = document.getElementById('productoId');
         const cantidad = parseInt(document.getElementById('cantidad').value);
@@ -260,11 +450,13 @@
 
         const productoId = productoSelect.value;
         const productoText = productoSelect.options[productoSelect.selectedIndex].text;
-        const stock = parseInt(productoSelect.options[productoSelect.selectedIndex].getAttribute('data-stock'));
+        const stockReal = parseInt(productoSelect.options[productoSelect.selectedIndex].getAttribute('data-stock'));
 
-        // VALIDAR STOCK DISPONIBLE
-        if (cantidad > stock) {
-            alert(`⚠️ Stock insuficiente!\n\nDisponible: ${stock} unidades\nSolicitado: ${cantidad} unidades`);
+        const cantidadYaAgregada = productosAgregados[productoId] || 0;
+        const stockDisponible = stockReal - cantidadYaAgregada;
+
+        if (cantidad > stockDisponible) {
+            alert(`⚠️ Stock insuficiente!\n\nStock real: ${stockReal} unidades\nYa agregaste: ${cantidadYaAgregada} unidades\nDisponible: ${stockDisponible} unidades\nSolicitado: ${cantidad} unidades`);
             return;
         }
 
@@ -276,8 +468,8 @@
         }
 
         const subtotal = cantidad * precio;
+        productosAgregados[productoId] = cantidadYaAgregada + cantidad;
 
-        // Ocultar mensaje vacío
         document.getElementById('mensajeVacio').style.display = 'none';
 
         const tabla = document.getElementById('detallesTabla');
@@ -286,7 +478,7 @@
         fila.innerHTML = `
             <td>
                 ${productoText}
-                <input type="hidden" name="detalles[${detalleIndex}].productoId" value="${productoId}">
+                <input type="hidden" name="detalles[${detalleIndex}].idProducto" value="${productoId}">
             </td>
             <td>
                 ${cantidad}
@@ -298,7 +490,7 @@
             </td>
             <td>$${subtotal.toLocaleString('es-CO', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
             <td>
-                <button type="button" class="btn btn-sm btn-danger" onclick="eliminarDetalle(this)">
+                <button type="button" class="btn btn-sm btn-danger" onclick="eliminarDetalle(this, '${productoId}', ${cantidad})">
                     <i class="bi bi-trash"></i>
                 </button>
             </td>
@@ -307,13 +499,19 @@
         detalleIndex++;
         calcularTotal();
         limpiarCampos();
+        actualizarStockMostrado();
     }
 
-    function eliminarDetalle(btn) {
+    function eliminarDetalle(btn, productoId, cantidad) {
+        productosAgregados[productoId] -= cantidad;
+        if (productosAgregados[productoId] <= 0) {
+            delete productosAgregados[productoId];
+        }
+
         btn.closest('tr').remove();
         calcularTotal();
+        actualizarStockMostrado();
 
-        // Mostrar mensaje si no hay detalles
         const tabla = document.getElementById('detallesTabla');
         if (tabla.rows.length === 0) {
             document.getElementById('mensajeVacio').style.display = 'block';
@@ -343,28 +541,39 @@
         document.getElementById('stockDisponible').textContent = '-';
     }
 
+    function actualizarStockMostrado() {
+        const productoSelect = document.getElementById('productoId');
+        if (productoSelect.value) {
+            const productoId = productoSelect.value;
+            const stockReal = parseInt(productoSelect.options[productoSelect.selectedIndex].getAttribute('data-stock'));
+            const cantidadAgregada = productosAgregados[productoId] || 0;
+            const stockDisponible = stockReal - cantidadAgregada;
+
+            if (cantidadAgregada > 0) {
+                document.getElementById('stockDisponible').textContent = `${stockDisponible} unidades (${cantidadAgregada} ya agregadas)`;
+            } else {
+                document.getElementById('stockDisponible').textContent = `${stockDisponible} unidades`;
+            }
+
+            const stockElement = document.getElementById('stockDisponible').parentElement;
+            if (stockDisponible === 0) {
+                stockElement.className = 'alert alert-danger mb-0';
+            } else if (stockDisponible < 10) {
+                stockElement.className = 'alert alert-warning mb-0';
+            } else {
+                stockElement.className = 'alert alert-info mb-0';
+            }
+        }
+    }
+
     function actualizarPrecio() {
         const productoSelect = document.getElementById('productoId');
         const precioInput = document.getElementById('precio');
 
         if (productoSelect.value) {
             const precio = productoSelect.options[productoSelect.selectedIndex].getAttribute('data-precio');
-            const stock = productoSelect.options[productoSelect.selectedIndex].getAttribute('data-stock');
-
             precioInput.value = parseFloat(precio).toFixed(2);
-            document.getElementById('stockDisponible').textContent = stock + ' unidades';
-
-            // Cambiar color según stock
-            const stockNum = parseInt(stock);
-            const stockElement = document.getElementById('stockDisponible').parentElement;
-
-            if (stockNum === 0) {
-                stockElement.className = 'alert alert-danger mb-0';
-            } else if (stockNum < 10) {
-                stockElement.className = 'alert alert-warning mb-0';
-            } else {
-                stockElement.className = 'alert alert-info mb-0';
-            }
+            actualizarStockMostrado();
         } else {
             precioInput.value = '';
             document.getElementById('stockDisponible').textContent = '-';
@@ -375,6 +584,12 @@
     function validarFormulario() {
         const tabla = document.getElementById('detallesTabla');
         const tipoPago = document.getElementById('tipoPago').value;
+        const cedula = document.getElementById('cedula').value;
+
+        if (!cedula) {
+            alert('⚠️ Debe seleccionar un cliente');
+            return false;
+        }
 
         if (!tipoPago) {
             alert('⚠️ Debe seleccionar un tipo de pago');
@@ -388,91 +603,6 @@
 
         return true;
     }
-
-    // Al cargar la página, mostrar el mensaje vacío
-    window.onload = function() {
-        const tabla = document.getElementById('detallesTabla');
-        if (tabla.rows.length === 0) {
-            document.getElementById('mensajeVacio').style.display = 'block';
-        }
-    };
-
-    // ========== BÚSQUEDA DE CLIENTES ==========
-let clientes = [];
-let clienteSeleccionado = null;
-
-// Cargar clientes al iniciar
-window.addEventListener('DOMContentLoaded', function() {
-    fetch('/api/clientes')
-        .then(response => response.json())
-        .then(data => {
-            clientes = data;
-            console.log('Clientes cargados:', clientes.length);
-        })
-        .catch(error => console.error('Error cargando clientes:', error));
-});
-
-// Búsqueda en tiempo real
-document.getElementById('buscarCliente')?.addEventListener('input', function(e) {
-    const termino = e.target.value.toLowerCase().trim();
-    const sugerencias = document.getElementById('sugerenciasClientes');
-
-    if (termino.length < 2) {
-        sugerencias.style.display = 'none';
-        return;
-    }
-
-    // Filtrar clientes
-    const resultados = clientes.filter(cliente =>
-        cliente.nombre.toLowerCase().includes(termino) ||
-        cliente.cedula.toString().includes(termino)
-    );
-
-    if (resultados.length === 0) {
-        sugerencias.innerHTML = '<div class="list-group-item">No se encontraron clientes</div>';
-        sugerencias.style.display = 'block';
-        return;
-    }
-
-    // Mostrar sugerencias
-    sugerencias.innerHTML = '';
-    resultados.slice(0, 5).forEach(cliente => {
-        const item = document.createElement('a');
-        item.className = 'list-group-item list-group-item-action';
-        item.href = '#';
-        item.innerHTML = `
-            <strong>${cliente.nombre}</strong><br>
-            <small class="text-muted">Cédula: ${cliente.cedula}</small>
-        `;
-        item.onclick = function(e) {
-            e.preventDefault();
-            seleccionarCliente(cliente);
-        };
-        sugerencias.appendChild(item);
-    });
-
-    sugerencias.style.display = 'block';
-});
-
-function seleccionarCliente(cliente) {
-    clienteSeleccionado = cliente;
-    document.getElementById('cedula').value = cliente.cedula;
-    document.getElementById('buscarCliente').value = '';
-    document.getElementById('sugerenciasClientes').style.display = 'none';
-
-    // Mostrar cliente seleccionado
-    document.getElementById('nombreClienteSeleccionado').textContent =
-        `${cliente.nombre} - ${cliente.cedula}`;
-    document.getElementById('clienteSeleccionado').style.display = 'block';
-}
-
-// Ocultar sugerencias al hacer clic fuera
-document.addEventListener('click', function(e) {
-    if (!e.target.closest('#buscarCliente') && !e.target.closest('#sugerenciasClientes')) {
-        document.getElementById('sugerenciasClientes').style.display = 'none';
-    }
-});
-
 </script>
 </body>
 </html>
