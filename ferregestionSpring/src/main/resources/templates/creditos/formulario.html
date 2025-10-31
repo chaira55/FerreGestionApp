@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/head :: head('Gestionar Crédito - FerreGestión')"></head>
+<body>
+<div th:replace="fragments/navbar :: navbar"></div>
+
+<div class="container mt-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a th:href="@{/}">Inicio</a></li>
+            <li class="breadcrumb-item"><a th:href="@{/web/creditos}">Créditos</a></li>
+            <li class="breadcrumb-item active">Editar</li>
+        </ol>
+    </nav>
+
+    <!-- Título -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1><i class="bi bi-pencil-square"></i> Actualizar Crédito</h1>
+        </div>
+        <div class="col-md-4 text-end">
+            <a th:href="@{/web/creditos}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Volver
+            </a>
+        </div>
+    </div>
+
+    <!-- Formulario -->
+    <div class="card">
+        <div class="card-header bg-warning text-white">
+            <h5 class="mb-0"><i class="bi bi-credit-card"></i> Información del Crédito</h5>
+        </div>
+        <div class="card-body">
+            <form th:action="@{/web/creditos/actualizar/{id}(id=${credito.idCredito})}"
+                  method="post">
+
+                <!-- Información del cliente (solo lectura) -->
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Cliente</label>
+                        <input type="text"
+                               class="form-control"
+                               th:value="${credito.cliente.nombre} + ' (CC: ' + ${credito.cliente.cedula} + ')'"
+                               readonly>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Venta Asociada</label>
+                        <input type="text"
+                               class="form-control"
+                               th:value="'Venta #' + ${credito.venta.idVenta}"
+                               readonly>
+                    </div>
+                </div>
+
+                <!-- Nombre del crédito -->
+                <div class="mb-3">
+                    <label for="nombre" class="form-label">Nombre del Crédito</label>
+                    <input type="text"
+                           class="form-control"
+                           id="nombre"
+                           name="nombre"
+                           th:value="${credito.nombre}"
+                           maxlength="100"
+                           placeholder="Ej: Crédito construcción">
+                    <small class="text-muted">Opcional - Ayuda a identificar el crédito</small>
+                </div>
+
+                <!-- Información financiera (solo lectura) -->
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Monto Total</label>
+                        <input type="text"
+                               class="form-control"
+                               th:value="${'$' + #numbers.formatDecimal(credito.montoTotal, 0, 'COMMA', 0, 'POINT')}"
+                               readonly>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="saldoPendiente" class="form-label">Saldo Pendiente <span class="text-danger">*</span></label>
+                        <input type="number"
+                               class="form-control"
+                               id="saldoPendiente"
+                               name="saldoPendiente"
+                               th:value="${credito.saldoPendiente}"
+                               step="0.01"
+                               min="0"
+                               th:max="${credito.montoTotal}"
+                               required>
+                    </div>
+                </div>
+
+                <!-- Estado -->
+                <div class="mb-3">
+                    <label for="estado" class="form-label">Estado <span class="text-danger">*</span></label>
+                    <select class="form-select" id="estado" name="estado" required>
+                        <option value="ACTIVO" th:selected="${credito.estado == 'ACTIVO'}">Activo</option>
+                        <option value="PAGADO" th:selected="${credito.estado == 'PAGADO'}">Pagado</option>
+                        <option value="VENCIDO" th:selected="${credito.estado == 'VENCIDO'}">Vencido</option>
+                    </select>
+                </div>
+
+                <!-- Botones -->
+                <div class="text-end">
+                    <a th:href="@{/web/creditos}" class="btn btn-secondary">
+                        <i class="bi bi-x-circle"></i> Cancelar
+                    </a>
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-save"></i> Guardar Cambios
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div th:replace="fragments/footer :: footer"></div>
+<div th:replace="fragments/footer :: scripts"></div>
+</body>
+</html>

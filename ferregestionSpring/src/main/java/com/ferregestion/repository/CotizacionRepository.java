@@ -17,6 +17,7 @@ public interface CotizacionRepository extends JpaRepository<Cotizacion, Integer>
 
     // Buscar por cliente (cédula)
     Page<Cotizacion> findByClienteCedula(Integer cedula, Pageable pageable);
+    List<Cotizacion> findByClienteCedula(Integer cedula);
 
     // Buscar por nombre del cliente
     Page<Cotizacion> findByNombreContainingIgnoreCase(String nombre, Pageable pageable);

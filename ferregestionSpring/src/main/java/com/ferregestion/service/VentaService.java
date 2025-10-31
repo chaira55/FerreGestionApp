@@ -3,12 +3,14 @@ package com.ferregestion.service;
 import com.ferregestion.dto.request.VentaRequestDTO;
 import com.ferregestion.dto.response.VentaResponseDTO;
 import com.ferregestion.entity.Venta;
+import com.ferregestion.entity.Credito;
 import com.ferregestion.entity.DetalleVenta;
 import com.ferregestion.entity.Producto;
 import com.ferregestion.exception.ResourceNotFoundException;
 import com.ferregestion.mapper.VentaMapper;
 import com.ferregestion.repository.VentaRepository;
 import com.ferregestion.repository.ProductoRepository;
+import com.ferregestion.repository.CreditoRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,13 +23,16 @@ public class VentaService {
     private final VentaRepository ventaRepository;
     private final VentaMapper ventaMapper;
     private final ProductoRepository productoRepository;
+    private final CreditoRepository creditoRepository; // ← AGREGADO
 
     public VentaService(VentaRepository ventaRepository,
                         VentaMapper ventaMapper,
-                        ProductoRepository productoRepository) {
+                        ProductoRepository productoRepository,
+                        CreditoRepository creditoRepository) { // ← AGREGADO
         this.ventaRepository = ventaRepository;
         this.ventaMapper = ventaMapper;
         this.productoRepository = productoRepository;
+        this.creditoRepository = creditoRepository; // ← AGREGADO
     }
 
     @Transactional
@@ -60,6 +65,31 @@ public class VentaService {
         // Guardar venta
         Venta ventaGuardada = ventaRepository.save(venta);
 
+        // ✅ CREAR CRÉDITO AUTOMÁTICAMENTE SI ES VENTA A CRÉDITO
+        if ("CREDITO".equalsIgnoreCase(ventaDTO.getTipoPago())) {
+            System.out.println("🔵 Tipo de pago es CRÉDITO. Creando crédito...");
+            System.out.println("   - ID Venta: " + ventaGuardada.getIdVenta());
+            System.out.println("   - Cliente: " + ventaGuardada.getCliente().getNombre());
+            System.out.println("   - Total: " + ventaGuardada.getTotal());
+
+            Credito credito = Credito.builder()
+                    .venta(ventaGuardada)
+                    .cliente(ventaGuardada.getCliente())
+                    .nombre("Crédito - Venta #" + ventaGuardada.getIdVenta())
+                    .montoTotal(ventaGuardada.getTotal())
+                    .saldoPendiente(ventaGuardada.getTotal())
+                    .estado("ACTIVO")
+                    .build();
+
+            Credito creditoGuardado = creditoRepository.save(credito);
+            System.out.println("✅ Crédito creado exitosamente!");
+            System.out.println("   - ID Crédito: " + creditoGuardado.getIdCredito());
+            System.out.println("   - Monto Total: " + creditoGuardado.getMontoTotal());
+            System.out.println("   - Saldo Pendiente: " + creditoGuardado.getSaldoPendiente());
+        } else {
+            System.out.println("ℹ️ Tipo de pago: " + ventaDTO.getTipoPago() + " (No se crea crédito)");
+        }
+
         return ventaMapper.toResponseDTO(ventaGuardada);
     }
 
@@ -85,6 +115,14 @@ public class VentaService {
 
         // DEVOLVER EL STOCK AL ELIMINAR UNA VENTA
         Venta venta = ventaRepository.findById(id).orElseThrow();
+
+        // ELIMINAR EL CRÉDITO ASOCIADO SI EXISTE
+        if ("CREDITO".equalsIgnoreCase(venta.getTipoPago())) {
+            creditoRepository.findByVentaIdVenta(id).ifPresent(credito -> {
+                System.out.println("🗑️ Eliminando crédito asociado: ID=" + credito.getIdCredito());
+                creditoRepository.delete(credito);
+            });
+        }
 
         for (DetalleVenta detalle : venta.getDetalles()) {
             Producto producto = detalle.getProducto();

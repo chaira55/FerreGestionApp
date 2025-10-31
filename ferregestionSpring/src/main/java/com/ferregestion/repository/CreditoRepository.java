@@ -9,12 +9,16 @@ import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface CreditoRepository extends JpaRepository<Credito, Integer> {
 
     // Buscar por cliente
     Page<Credito> findByClienteCedula(Integer cedula, Pageable pageable);
+
+    // ✅ AGREGAR: Buscar lista simple por cliente (sin paginación)
+    List<Credito> findByClienteCedula(Integer cedula);
 
     // Buscar por estado
     Page<Credito> findByEstado(String estado, Pageable pageable);
@@ -30,4 +34,7 @@ public interface CreditoRepository extends JpaRepository<Credito, Integer> {
     // Total de deuda por cliente
     @Query("SELECT SUM(c.saldoPendiente) FROM Credito c WHERE c.cliente.cedula = :cedula AND c.estado != 'PAGADO'")
     BigDecimal calcularDeudaCliente(Integer cedula);
+
+    // ✅ AGREGAR: Buscar crédito por ID de venta
+    Optional<Credito> findByVentaIdVenta(Integer idVenta);
 }

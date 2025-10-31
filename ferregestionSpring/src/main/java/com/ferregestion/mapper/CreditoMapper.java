@@ -53,10 +53,13 @@ public class CreditoMapper {
             return null;
         }
 
+        System.out.println("Mapeando crédito: " + entity.getIdCredito());
+
         return CreditoResponseDTO.builder()
                 .idCredito(entity.getIdCredito())
-                .idVenta(entity.getVenta().getIdVenta())
-                .cliente(clienteMapper.toResponseDTO(entity.getCliente()))
+                .idVenta(entity.getVenta() != null ? entity.getVenta().getIdVenta() : null)
+                .idCliente(entity.getCliente() != null ? entity.getCliente().getCedula() : null)
+                .nombreCliente(entity.getCliente() != null ? entity.getCliente().getNombre() : null)
                 .nombre(entity.getNombre())
                 .montoTotal(entity.getMontoTotal())
                 .saldoPendiente(entity.getSaldoPendiente())

@@ -2,9 +2,11 @@ package com.ferregestion.controller.web;
 
 import com.ferregestion.dto.request.ClienteRequestDTO;
 import com.ferregestion.dto.response.ClienteResponseDTO;
+import com.ferregestion.dto.response.CotizacionResponseDTO;
 import com.ferregestion.service.ClienteService;
 import com.ferregestion.service.VentaService;
 import com.ferregestion.service.CreditoService;
+import com.ferregestion.service.CotizacionService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -13,6 +15,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import jakarta.validation.Valid;
 import java.math.BigDecimal;
+import java.util.List;
 
 @Controller
 @RequestMapping("/web/clientes")
@@ -21,13 +24,16 @@ public class ClienteWebController {
     private final ClienteService clienteService;
     private final VentaService ventaService;
     private final CreditoService creditoService;
+    private final CotizacionService cotizacionService;
 
     public ClienteWebController(ClienteService clienteService,
                                 VentaService ventaService,
-                                CreditoService creditoService) {
+                                CreditoService creditoService,
+                                CotizacionService cotizacionService) {
         this.clienteService = clienteService;
         this.ventaService = ventaService;
         this.creditoService = creditoService;
+        this.cotizacionService = cotizacionService;
     }
 
     // Listar todos los clientes
@@ -131,7 +137,7 @@ public class ClienteWebController {
         return "redirect:/web/clientes";
     }
 
-    // Ver detalle de cliente CON ESTADÍSTICAS CORREGIDAS
+    // Ver detalle de cliente CON ESTADÍSTICAS Y COTIZACIONES
     @GetMapping("/ver/{cedula}")
     public String ver(@PathVariable Integer cedula, Model model) {
         try {
@@ -160,21 +166,15 @@ public class ClienteWebController {
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
 
             // Créditos activos (con saldo pendiente)
+            // Créditos activos (con saldo pendiente)
             long creditosActivos = creditoService.listarTodos().stream()
                     .filter(c -> {
-                        if (c.getCliente() == null) return false;
-                        Integer creditoCedula = c.getCliente().getCedula();
+                        Integer creditoCedula = c.getIdCliente();
                         if (creditoCedula == null || !creditoCedula.equals(cedula)) return false;
                         BigDecimal saldo = c.getSaldoPendiente();
                         return saldo != null && saldo.compareTo(BigDecimal.ZERO) > 0;
                     })
                     .count();
-
-            // DEBUG: Imprimir en consola para verificar
-            System.out.println("=== ESTADÍSTICAS CLIENTE " + cedula + " ===");
-            System.out.println("Total Compras: " + totalCompras);
-            System.out.println("Total Gastado: " + totalGastado);
-            System.out.println("Créditos Activos: " + creditosActivos);
 
             // Obtener lista de ventas del cliente para mostrar
             var ventasCliente = ventaService.listarTodos().stream()
@@ -185,10 +185,21 @@ public class ClienteWebController {
                     })
                     .collect(java.util.stream.Collectors.toList());
 
+            // OBTENER COTIZACIONES DEL CLIENTE
+            List<CotizacionResponseDTO> cotizaciones = cotizacionService.listarPorCliente(cedula);
+
+            // DEBUG
+            System.out.println("=== ESTADÍSTICAS CLIENTE " + cedula + " ===");
+            System.out.println("Total Compras: " + totalCompras);
+            System.out.println("Total Gastado: " + totalGastado);
+            System.out.println("Créditos Activos: " + creditosActivos);
+            System.out.println("Total Cotizaciones: " + cotizaciones.size());
+
             model.addAttribute("totalCompras", totalCompras);
             model.addAttribute("totalGastado", totalGastado);
             model.addAttribute("creditosActivos", creditosActivos);
             model.addAttribute("ventasCliente", ventasCliente);
+            model.addAttribute("cotizaciones", cotizaciones);
 
             return "clientes/detalle";
         } catch (Exception e) {

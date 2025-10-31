@@ -46,7 +46,7 @@ public class ProductoWebController {
         model.addAttribute("producto", productoDTO);
         model.addAttribute("grupos", grupoService.listarTodos());
         model.addAttribute("accion", "Nuevo");
-        return "productos/formulario";
+        return "productos/formulario.html";
     }
 
     @PostMapping("/guardar")
@@ -62,7 +62,7 @@ public class ProductoWebController {
         if (result.hasErrors()) {
             model.addAttribute("grupos", grupoService.listarTodos());
             model.addAttribute("accion", "Nuevo");
-            return "productos/formulario";
+            return "productos/formulario.html";
         }
 
         try {
@@ -74,7 +74,7 @@ public class ProductoWebController {
             model.addAttribute("error", e.getMessage());
             model.addAttribute("grupos", grupoService.listarTodos());
             model.addAttribute("accion", "Nuevo");
-            return "productos/formulario";
+            return "productos/formulario.html";
         }
     }
 
@@ -96,7 +96,7 @@ public class ProductoWebController {
             model.addAttribute("productoId", id);
             model.addAttribute("grupos", grupoService.listarTodos());
             model.addAttribute("accion", "Editar");
-            return "productos/formulario";
+            return "productos/formulario.html";
         } catch (Exception e) {
             return "redirect:/web/productos";
         }
@@ -117,7 +117,7 @@ public class ProductoWebController {
             model.addAttribute("productoId", id);
             model.addAttribute("grupos", grupoService.listarTodos());
             model.addAttribute("accion", "Editar");
-            return "productos/formulario";
+            return "productos/formulario.html";
         }
 
         try {
@@ -130,7 +130,7 @@ public class ProductoWebController {
             model.addAttribute("productoId", id);
             model.addAttribute("grupos", grupoService.listarTodos());
             model.addAttribute("accion", "Editar");
-            return "productos/formulario";
+            return "productos/formulario.html";
         }
     }
 

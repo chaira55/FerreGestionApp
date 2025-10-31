@@ -12,6 +12,7 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @Builder
 public class DetalleCotizacionResponseDTO {
+
     private Integer idDetalleCotizacion;
     private Integer idProducto;
     private String descripcionProducto;

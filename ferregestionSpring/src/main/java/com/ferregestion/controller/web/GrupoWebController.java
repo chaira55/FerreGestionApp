@@ -31,7 +31,7 @@ public class GrupoWebController {
     public String mostrarFormularioNuevo(Model model) {
         model.addAttribute("grupo", new GrupoRequestDTO());
         model.addAttribute("accion", "Nuevo");
-        return "grupos/formulario";
+        return "grupos/formulario.html";
     }
 
     @PostMapping("/guardar")
@@ -42,7 +42,7 @@ public class GrupoWebController {
 
         if (result.hasErrors()) {
             model.addAttribute("accion", "Nuevo");
-            return "grupos/formulario";
+            return "grupos/formulario.html";
         }
 
         try {
@@ -53,7 +53,7 @@ public class GrupoWebController {
         } catch (Exception e) {
             model.addAttribute("error", e.getMessage());
             model.addAttribute("accion", "Nuevo");
-            return "grupos/formulario";
+            return "grupos/formulario.html";
         }
     }
 
@@ -70,7 +70,7 @@ public class GrupoWebController {
 
             model.addAttribute("grupo", grupoDTO);
             model.addAttribute("accion", "Editar");
-            return "grupos/formulario";
+            return "grupos/formulario.html";
         } catch (Exception e) {
             return "redirect:/web/grupos";
         }
@@ -85,7 +85,7 @@ public class GrupoWebController {
 
         if (result.hasErrors()) {
             model.addAttribute("accion", "Editar");
-            return "grupos/formulario";
+            return "grupos/formulario.html";
         }
 
         try {
@@ -96,7 +96,7 @@ public class GrupoWebController {
         } catch (Exception e) {
             model.addAttribute("error", e.getMessage());
             model.addAttribute("accion", "Editar");
-            return "grupos/formulario";
+            return "grupos/formulario.html";
         }
     }
 

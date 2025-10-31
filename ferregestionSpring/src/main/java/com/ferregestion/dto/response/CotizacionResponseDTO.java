@@ -14,6 +14,7 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class CotizacionResponseDTO {
+
     private Integer idCotizacion;
     private ClienteResponseDTO cliente;
     private String nombre;

@@ -59,7 +59,7 @@ public class VentaWebController {
         }
 
         model.addAttribute("productos", productoService.listarTodos());
-        return "ventas/formulario";
+        return "ventas/formulario.html";
     }
 
     @PostMapping("/guardar")
@@ -137,7 +137,7 @@ public class VentaWebController {
                 }
 
                 model.addAttribute("productos", productoService.listarTodos());
-                return "ventas/formulario";
+                return "ventas/formulario.html";
             }
 
             // Guardar venta
@@ -164,7 +164,7 @@ public class VentaWebController {
             }
 
             model.addAttribute("productos", productoService.listarTodos());
-            return "ventas/formulario";
+            return "ventas/formulario.html";
 
         } catch (Exception e) {
             System.err.println("❌ Error inesperado: " + e.getMessage());
@@ -182,7 +182,7 @@ public class VentaWebController {
             }
 
             model.addAttribute("productos", productoService.listarTodos());
-            return "ventas/formulario";
+            return "ventas/formulario.html";
         }
     }
 

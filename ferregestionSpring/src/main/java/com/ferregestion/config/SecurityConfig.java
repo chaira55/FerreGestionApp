@@ -20,11 +20,26 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/api/clientes", "/api/productos").permitAll()  // ✅ AGREGAR ESTA LÍNEA
+                        // API pública
+                        .requestMatchers("/api/clientes", "/api/productos").permitAll()
+
+                        // Recursos estáticos
                         .requestMatchers("/css/**", "/js/**", "/images/**", "/webjars/**").permitAll()
+
+                        // Swagger
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+
+                        // Error y login
                         .requestMatchers("/error").permitAll()
                         .requestMatchers("/login").permitAll()
+
+                        // ✅ IMPORTANTE: Permitir todas las rutas web (autenticadas)
+                        .requestMatchers("/web/**").authenticated()
+
+                        // ✅ Página principal
+                        .requestMatchers("/").authenticated()
+
+                        // Cualquier otra petición requiere autenticación
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
@@ -35,6 +50,11 @@ public class SecurityConfig {
                 .logout(logout -> logout
                         .logoutSuccessUrl("/login?logout")
                         .permitAll()
+                )
+                // ✅ CSRF configurado correctamente
+                .csrf(csrf -> csrf
+                        // Habilitar CSRF para formularios web
+                        .ignoringRequestMatchers("/api/**") // Solo ignorar en API REST
                 );
 
         return http.build();

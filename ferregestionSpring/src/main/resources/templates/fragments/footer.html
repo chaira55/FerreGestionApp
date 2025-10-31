@@ -1,19 +1,29 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <body>
-<footer th:fragment="footer" class="bg-light text-center text-lg-start mt-5">
-    <div class="text-center p-3">
-        © 2025 FerreGestión - Sistema de Gestión de Ferretería
-    </div>
-</footer>
 
-<!-- Scripts -->
-<script th:fragment="scripts">
-    <!-- Bootstrap Bundle with Popper -->
+<!-- Fragment del footer visible -->
+<div th:fragment="footer" class="footer mt-5 py-4 bg-dark text-white">
+    <div class="container text-center">
+        <p class="mb-0">
+            <i class="bi bi-shop"></i>
+            <strong>FerreGestión</strong> &copy; 2025 - Sistema de Gestión de Ferretería
+        </p>
+        <small class="text-muted">
+            Desarrollado con <i class="bi bi-heart-fill text-danger"></i>
+            por tu equipo de desarrollo
+        </small>
+    </div>
+</div>
+
+<!-- Fragment de scripts -->
+<div th:fragment="scripts">
+    <!-- Bootstrap Bundle (incluye Popper) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-<!-- JS personalizado -->
-<script th:src="@{/js/main.js}"></script>
-</script>
+    <!-- jQuery (opcional, solo si lo necesitas) -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</div>
+
 </body>
 </html>

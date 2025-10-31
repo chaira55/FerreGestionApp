@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/head :: head('Cotizaciones - FerreGestión')"></head>
+<body>
+<div th:replace="fragments/navbar :: navbar"></div>
+
+<div class="container mt-4">
+    <!-- Título y botón -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1><i class="bi bi-file-text"></i> Cotizaciones</h1>
+            <p class="text-muted">Gestión de cotizaciones del sistema</p>
+        </div>
+        <div class="col-md-4 text-end">
+            <a th:href="@{/web/cotizaciones/nueva}" class="btn btn-primary btn-lg">
+                <i class="bi bi-plus-circle"></i> Nueva Cotización
+            </a>
+        </div>
+    </div>
+
+    <!-- Mensajes -->
+    <div th:if="${mensaje}"
+         th:class="'alert alert-' + ${tipoMensaje} + ' alert-dismissible fade show'"
+         role="alert">
+        <span th:text="${mensaje}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <span th:text="${error}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <!-- Buscador y total -->
+    <div class="row mb-3">
+        <div class="col-md-8">
+            <div class="input-group">
+                <span class="input-group-text">
+                    <i class="bi bi-search"></i>
+                </span>
+                <input type="text"
+                       class="form-control"
+                       id="buscarCotizacion"
+                       placeholder="Buscar por ID, cliente, nombre, fecha, total...">
+            </div>
+        </div>
+        <div class="col-md-4 text-end">
+            <span class="badge bg-success fs-5">
+                Total: <span id="totalCotizaciones" th:text="${cotizaciones.size()}">0</span>
+            </span>
+        </div>
+    </div>
+
+    <!-- Tabla de cotizaciones -->
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Cliente</th>
+                        <th>Nombre Cotización</th>
+                        <th>Fecha</th>
+                        <th>Total</th>
+                        <th class="text-center">Acciones</th>
+                    </tr>
+                    </thead>
+                    <tbody id="tablaCotizaciones">
+                    <tr th:each="cotizacion : ${cotizaciones}">
+                        <td><strong th:text="'#' + ${cotizacion.idCotizacion}">#1</strong></td>
+                        <td>
+                                <span th:if="${cotizacion.cliente != null}"
+                                      th:text="${cotizacion.cliente.nombre}">Cliente</span>
+                            <br>
+                            <small class="text-muted" th:if="${cotizacion.cliente != null}">
+                                CC: <span th:text="${cotizacion.cliente.cedula}">123456789</span>
+                            </small>
+                        </td>
+                        <td>
+                                <span th:if="${cotizacion.nombre != null && !cotizacion.nombre.isEmpty()}"
+                                      th:text="${cotizacion.nombre}">
+                                    Cotización ejemplo
+                                </span>
+                            <span th:unless="${cotizacion.nombre != null && !cotizacion.nombre.isEmpty()}"
+                                  class="text-muted">
+                                    Sin nombre
+                                </span>
+                        </td>
+                        <td th:text="${#temporals.format(cotizacion.fecha, 'dd/MM/yyyy')}">28/10/2025</td>
+                        <td>
+                            <strong class="text-success"
+                                    th:text="${'$' + #numbers.formatDecimal(cotizacion.total, 0, 'COMMA', 0, 'POINT')}">
+                                $50,000
+                            </strong>
+                        </td>
+                        <td class="text-center">
+                            <a th:href="@{/web/cotizaciones/ver/{id}(id=${cotizacion.idCotizacion})}"
+                               class="btn btn-sm btn-info text-white"
+                               title="Ver detalle">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                            <a th:href="@{/web/cotizaciones/eliminar/{id}(id=${cotizacion.idCotizacion})}"
+                               class="btn btn-sm btn-danger"
+                               onclick="return confirm('¿Está seguro de eliminar esta cotización?')"
+                               title="Eliminar">
+                                <i class="bi bi-trash"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Mensaje cuando no hay resultados -->
+            <div id="sinResultados" class="text-center py-5" style="display: none;">
+                <i class="bi bi-search display-1 text-muted"></i>
+                <p class="text-muted mt-3">No se encontraron cotizaciones</p>
+            </div>
+
+            <!-- Mensaje si no hay cotizaciones -->
+            <div th:if="${cotizaciones.empty}" class="text-center py-5">
+                <i class="bi bi-inbox display-1 text-muted"></i>
+                <p class="text-muted mt-3">No hay cotizaciones registradas</p>
+                <a th:href="@{/web/cotizaciones/nueva}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> Crear primera cotización
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div th:replace="fragments/footer :: footer"></div>
+<div th:replace="fragments/footer :: scripts"></div>
+
+<script>
+    // Búsqueda en tiempo real mejorada
+    document.getElementById('buscarCotizacion')?.addEventListener('input', function(e) {
+        const termino = e.target.value.toLowerCase().trim();
+        const tbody = document.getElementById('tablaCotizaciones');
+        const filas = tbody.querySelectorAll('tr');
+        const tabla = tbody.closest('table');
+        const mensajeSinResultados = document.getElementById('sinResultados');
+        let contadorVisibles = 0;
+
+        filas.forEach(fila => {
+            // Obtener todos los textos de la fila
+            const id = fila.querySelector('td:nth-child(1)')?.textContent.toLowerCase() || '';
+            const cliente = fila.querySelector('td:nth-child(2)')?.textContent.toLowerCase() || '';
+            const nombre = fila.querySelector('td:nth-child(3)')?.textContent.toLowerCase() || '';
+            const fecha = fila.querySelector('td:nth-child(4)')?.textContent.toLowerCase() || '';
+            const total = fila.querySelector('td:nth-child(5)')?.textContent.toLowerCase() || '';
+
+            // Buscar en todos los campos
+            const coincide = id.includes(termino) ||
+                           cliente.includes(termino) ||
+                           nombre.includes(termino) ||
+                           fecha.includes(termino) ||
+                           total.includes(termino);
+
+            fila.style.display = coincide ? '' : 'none';
+            if (coincide) contadorVisibles++;
+        });
+
+        // Mostrar/ocultar mensaje
+        if (contadorVisibles === 0 && termino.length > 0) {
+            tabla.style.display = 'none';
+            mensajeSinResultados.style.display = 'block';
+        } else {
+            tabla.style.display = '';
+            mensajeSinResultados.style.display = 'none';
+        }
+
+        // Actualizar contador
+        document.getElementById('totalCotizaciones').textContent = contadorVisibles;
+    });
+</script>
+
+</body>
+</html>

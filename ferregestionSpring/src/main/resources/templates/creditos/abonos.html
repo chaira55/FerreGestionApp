@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('Abonar Crédito - FerreGestión')}"></head>
+<body>
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="container mt-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a th:href="@{/}">Inicio</a></li>
+            <li class="breadcrumb-item"><a th:href="@{/web/creditos}">Créditos</a></li>
+            <li class="breadcrumb-item"><a th:href="@{/web/creditos/ver/{id}(id=${credito.idCredito})}">Detalle</a></li>
+            <li class="breadcrumb-item active">Abonar</li>
+        </ol>
+    </nav>
+
+    <!-- Título -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1><i class="bi bi-cash-coin"></i> Abonar al Crédito #<span th:text="${credito.idCredito}">1</span></h1>
+            <p class="text-muted">Registrar un pago parcial o total del crédito</p>
+        </div>
+        <div class="col-md-4 text-end">
+            <a th:href="@{/web/creditos/ver/{id}(id=${credito.idCredito})}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Volver
+            </a>
+        </div>
+    </div>
+
+    <!-- Mensajes -->
+    <div th:if="${mensaje}"
+         th:class="'alert alert-' + ${tipoMensaje} + ' alert-dismissible fade show'"
+         role="alert">
+        <span th:text="${mensaje}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <span th:text="${error}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <div class="row">
+        <!-- Información del crédito -->
+        <div class="col-md-4 mb-4">
+            <div class="card border-info">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="bi bi-info-circle"></i> Información del Crédito</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless mb-0">
+                        <tr>
+                            <th>Cliente:</th>
+                            <td th:text="${credito.nombreCliente}">Cliente</td>
+                        </tr>
+                        <tr>
+                            <th>Monto Total:</th>
+                            <td>
+                                <strong class="text-info"
+                                        th:text="${'$' + #numbers.formatDecimal(credito.montoTotal, 0, 'COMMA', 0, 'POINT')}">
+                                    $100,000
+                                </strong>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Saldo Pendiente:</th>
+                            <td>
+                                <strong class="text-warning"
+                                        th:text="${'$' + #numbers.formatDecimal(credito.saldoPendiente, 0, 'COMMA', 0, 'POINT')}">
+                                    $50,000
+                                </strong>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Estado:</th>
+                            <td>
+                                <span th:if="${credito.estado == 'ACTIVO'}" class="badge bg-warning">Activo</span>
+                                <span th:if="${credito.estado == 'PAGADO'}" class="badge bg-success">Pagado</span>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Formulario de abono -->
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="bi bi-cash-stack"></i> Registrar Abono</h5>
+                </div>
+                <div class="card-body">
+                    <form th:action="@{/web/creditos/{id}/abonar(id=${credito.idCredito})}"
+                          method="post">
+
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+                        <!-- Monto del abono -->
+                        <div class="mb-3">
+                            <label for="montoAbono" class="form-label">
+                                <i class="bi bi-currency-dollar"></i> Monto del Abono <span class="text-danger">*</span>
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number"
+                                       class="form-control form-control-lg"
+                                       id="montoAbono"
+                                       name="montoAbono"
+                                       min="1"
+                                       th:max="${credito.saldoPendiente}"
+                                       step="0.01"
+                                       required
+                                       placeholder="0.00">
+                            </div>
+                            <small class="text-muted">
+                                Máximo: $<span th:text="${#numbers.formatDecimal(credito.saldoPendiente, 0, 'COMMA', 2, 'POINT')}">0.00</span>
+                            </small>
+                            <div id="alertaMonto" class="alert alert-danger mt-2" style="display: none;">
+                                <i class="bi bi-exclamation-triangle"></i>
+                                <strong>¡Error!</strong> El monto del abono no puede ser mayor al saldo pendiente.
+                            </div>
+                        </div>
+
+                        <!-- Botones rápidos -->
+                        <div class="mb-3">
+                            <label class="form-label">Abonos rápidos:</label>
+                            <div class="btn-group d-flex" role="group">
+                                <button type="button"
+                                        class="btn btn-outline-secondary"
+                                        onclick="setMonto(10000)">
+                                    $10,000
+                                </button>
+                                <button type="button"
+                                        class="btn btn-outline-secondary"
+                                        onclick="setMonto(20000)">
+                                    $20,000
+                                </button>
+                                <button type="button"
+                                        class="btn btn-outline-secondary"
+                                        onclick="setMonto(50000)">
+                                    $50,000
+                                </button>
+                                <button type="button"
+                                        class="btn btn-outline-success"
+                                        th:onclick="'setMonto(' + ${credito.saldoPendiente} + ')'">
+                                    <i class="bi bi-check-all"></i> Pagar Total
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Observaciones -->
+                        <div class="mb-3">
+                            <label for="observaciones" class="form-label">
+                                <i class="bi bi-chat-left-text"></i> Observaciones (Opcional)
+                            </label>
+                            <textarea class="form-control"
+                                      id="observaciones"
+                                      name="observaciones"
+                                      rows="3"
+                                      placeholder="Ej: Abono correspondiente a pago quincenal..."></textarea>
+                        </div>
+
+                        <!-- Resumen -->
+                        <div class="alert alert-light border">
+                            <h6><i class="bi bi-calculator"></i> Resumen del Abono</h6>
+                            <table class="table table-sm mb-0">
+                                <tr>
+                                    <th>Saldo Actual:</th>
+                                    <td class="text-end">
+                                        <span id="saldoActual"
+                                              th:text="${'$' + #numbers.formatDecimal(credito.saldoPendiente, 0, 'COMMA', 2, 'POINT')}">
+                                            $0.00
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>Monto a Abonar:</th>
+                                    <td class="text-end text-success">
+                                        <strong id="montoAbonoDisplay">$0.00</strong>
+                                    </td>
+                                </tr>
+                                <tr class="table-success">
+                                    <th>Nuevo Saldo:</th>
+                                    <td class="text-end">
+                                        <strong id="nuevoSaldo">
+                                            <span th:text="${'$' + #numbers.formatDecimal(credito.saldoPendiente, 0, 'COMMA', 2, 'POINT')}">
+                                                $0.00
+                                            </span>
+                                        </strong>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+
+                        <!-- Botones -->
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="bi bi-check-circle"></i> Registrar Abono
+                            </button>
+                            <a th:href="@{/web/creditos/ver/{id}(id=${credito.idCredito})}"
+                               class="btn btn-outline-secondary">
+                                <i class="bi bi-x-circle"></i> Cancelar
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+<div th:replace="~{fragments/footer :: scripts}"></div>
+
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    const saldoActualValue = /*[[${credito.saldoPendiente}]]*/ 0;
+
+    // Función para establecer monto
+    function setMonto(monto) {
+        const input = document.getElementById('montoAbono');
+        input.value = monto;
+        actualizarResumen();
+    }
+
+    // Actualizar resumen en tiempo real
+    document.getElementById('montoAbono')?.addEventListener('input', actualizarResumen);
+
+    function actualizarResumen() {
+        const montoAbono = parseFloat(document.getElementById('montoAbono').value) || 0;
+        const alertaMonto = document.getElementById('alertaMonto');
+        const btnSubmit = document.querySelector('button[type="submit"]');
+
+        // Validar si el monto excede el saldo
+        if (montoAbono > saldoActualValue) {
+            alertaMonto.style.display = 'block';
+            btnSubmit.disabled = true;
+            btnSubmit.classList.add('disabled');
+            document.getElementById('montoAbonoDisplay').textContent =
+                '$' + montoAbono.toLocaleString('es-CO', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            document.getElementById('nuevoSaldo').textContent = 'Error';
+            document.getElementById('nuevoSaldo').className = 'text-danger fw-bold';
+            return;
+        } else {
+            alertaMonto.style.display = 'none';
+            btnSubmit.disabled = false;
+            btnSubmit.classList.remove('disabled');
+        }
+
+        const nuevoSaldo = Math.max(0, saldoActualValue - montoAbono);
+
+        document.getElementById('montoAbonoDisplay').textContent =
+            '$' + montoAbono.toLocaleString('es-CO', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+
+        document.getElementById('nuevoSaldo').textContent =
+            '$' + nuevoSaldo.toLocaleString('es-CO', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+
+        // Cambiar color si está pagado completamente
+        if (nuevoSaldo === 0) {
+            document.getElementById('nuevoSaldo').className = 'text-success fw-bold';
+        } else {
+            document.getElementById('nuevoSaldo').className = 'text-warning fw-bold';
+        }
+    }
+
+    // Validación del formulario
+    document.querySelector('form')?.addEventListener('submit', function(e) {
+        const montoAbono = parseFloat(document.getElementById('montoAbono').value) || 0;
+
+        if (montoAbono > saldoActualValue) {
+            e.preventDefault();
+            alert('¡Error! El monto del abono no puede ser mayor al saldo pendiente de $' +
+                  saldoActualValue.toLocaleString('es-CO', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
+            return false;
+        }
+
+        if (montoAbono <= 0) {
+            e.preventDefault();
+            alert('¡Error! Debe ingresar un monto válido mayor a $0');
+            return false;
+        }
+
+        return true;
+    });
+    /*]]>*/
+</script>
+</body>
+</html>

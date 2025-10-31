@@ -13,7 +13,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/creditos")
@@ -108,8 +110,39 @@ public class CreditoController {
 
     @Operation(summary = "Eliminar crédito")
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> eliminar(@PathVariable Integer id) {
-        creditoService.eliminar(id);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<Map<String, Object>> eliminar(@PathVariable Integer id) {
+        try {
+            System.out.println("🗑️ API: Solicitud de eliminación de crédito ID: " + id);
+
+            // Obtener información del crédito antes de eliminarlo
+            CreditoResponseDTO credito = creditoService.buscarPorId(id);
+
+            // Eliminar el crédito
+            creditoService.eliminar(id);
+
+            System.out.println("✅ API: Crédito eliminado exitosamente");
+
+            // Respuesta con información
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "Crédito eliminado exitosamente");
+            response.put("creditoEliminado", Map.of(
+                    "id", credito.getIdCredito(),
+                    "cliente", credito.getNombreCliente(),
+                    "monto", credito.getMontoTotal()
+            ));
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            System.err.println("❌ API: Error al eliminar crédito: " + e.getMessage());
+            e.printStackTrace();
+
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", "Error al eliminar el crédito: " + e.getMessage());
+
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
     }
 }

@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('Créditos - FerreGestión')}"></head>
+<body>
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="container mt-4">
+    <!-- Título y acciones -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <h1><i class="bi bi-credit-card"></i> Créditos</h1>
+            <p class="text-muted" th:if="${soloActivos == true}">Mostrando solo créditos activos</p>
+            <p class="text-muted" th:if="${soloPagados == true}">Mostrando solo créditos pagados</p>
+            <p class="text-muted" th:if="${soloActivos != true and soloPagados != true}">Gestión de créditos del sistema</p>       </div>
+        <div class="col-md-6 text-end">
+            <!-- Filtros -->
+            <div class="btn-group mb-2" role="group">
+                <a th:href="@{/web/creditos}"
+                   class="btn btn-sm"
+                   th:classappend="${soloActivos != true and soloPagados != true} ? 'btn-primary' : 'btn-outline-primary'">
+                    <i class="bi bi-list"></i> Todos
+                </a>
+                <a th:href="@{/web/creditos/activos}"
+                   class="btn btn-sm"
+                   th:classappend="${soloActivos == true} ? 'btn-warning' : 'btn-outline-warning'">
+                    <i class="bi bi-clock-history"></i> Activos
+                </a>
+                <a th:href="@{/web/creditos/pagados}"
+                   class="btn btn-sm"
+                   th:classappend="${soloPagados == true} ? 'btn-success' : 'btn-outline-success'">
+                    <i class="bi bi-check-circle"></i> Pagados
+                </a>
+            </div>
+            <br>
+            <!-- Acceso rápido a ventas -->
+            <a th:href="@{/web/ventas/nueva}" class="btn btn-success">
+                <i class="bi bi-plus-circle"></i> Nueva Venta a Crédito
+            </a>
+        </div>
+    </div>
+
+    <!-- Estadísticas generales -->
+    <div class="row mb-4" th:if="${creditos != null && !creditos.empty}">
+        <div class="col-md-3">
+            <div class="card text-center border-primary">
+                <div class="card-body">
+                    <i class="bi bi-credit-card display-4 text-primary"></i>
+                    <h6 class="text-muted mt-2">Total Créditos</h6>
+                    <h3 class="text-primary mb-0" th:text="${creditos.size()}">0</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center border-warning">
+                <div class="card-body">
+                    <i class="bi bi-clock-history display-4 text-warning"></i>
+                    <h6 class="text-muted mt-2">Activos</h6>
+                    <h3 class="text-warning mb-0">
+                        <span th:text="${#lists.size(creditos.?[saldoPendiente.compareTo(T(java.math.BigDecimal).ZERO) > 0])}">0</span>
+                    </h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center border-success">
+                <div class="card-body">
+                    <i class="bi bi-check-circle display-4 text-success"></i>
+                    <h6 class="text-muted mt-2">Pagados</h6>
+                    <h3 class="text-success mb-0">
+                        <span th:text="${#lists.size(creditos.?[estado == 'PAGADO'])}">0</span>
+                    </h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center border-info">
+                <div class="card-body">
+                    <i class="bi bi-cash-stack display-4 text-info"></i>
+                    <h6 class="text-muted mt-2">Total Pendiente</h6>
+                    <h4 class="text-info mb-0"
+                        th:text="${'$' + #numbers.formatDecimal(#aggregates.sum(creditos.![saldoPendiente]), 0, 'COMMA', 0, 'POINT')}">
+                        $0
+                    </h4>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mensajes -->
+    <div th:if="${mensaje}"
+         th:class="'alert alert-' + ${tipoMensaje} + ' alert-dismissible fade show'"
+         role="alert">
+        <span th:text="${mensaje}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <span th:text="${error}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <!-- Buscador y total -->
+    <div class="row mb-3">
+        <div class="col-md-8">
+            <div class="input-group">
+                <span class="input-group-text">
+                    <i class="bi bi-search"></i>
+                </span>
+                <input type="text"
+                       class="form-control"
+                       id="buscarCredito"
+                       placeholder="Buscar por ID, cliente, monto...">
+            </div>
+        </div>
+        <div class="col-md-4 text-end">
+            <span class="badge bg-warning fs-5">
+                Total: <span id="totalCreditos" th:text="${creditos.size()}">0</span>
+            </span>
+        </div>
+    </div>
+
+    <!-- Tabla de créditos -->
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Cliente</th>
+                        <th>Nombre Crédito</th>
+                        <th>Venta</th>
+                        <th>Monto Total</th>
+                        <th>Saldo Pendiente</th>
+                        <th>Estado</th>
+                        <th class="text-center">Acciones</th>
+                    </tr>
+                    </thead>
+                    <tbody id="tablaCreditos">
+                    <tr th:each="credito : ${creditos}">
+                        <td><strong th:text="'#' + ${credito.idCredito}">#1</strong></td>
+                        <td>
+                            <span th:text="${credito.nombreCliente}">Cliente</span>
+                            <br>
+                            <small class="text-muted">
+                                CC: <span th:text="${credito.idCliente}">123456789</span>
+                            </small>
+                        </td>
+                        <td>
+                        <span th:if="${credito.nombre != null && !credito.nombre.isEmpty()}"
+                              th:text="${credito.nombre}">
+                            Crédito ejemplo
+                        </span>
+                            <span th:unless="${credito.nombre != null && !credito.nombre.isEmpty()}"
+                                  class="text-muted">
+                            Sin nombre
+                        </span>
+                        </td>
+                        <td>
+                            <a th:href="@{/web/ventas/ver/{id}(id=${credito.idVenta})}"
+                               class="text-primary">
+                                <strong th:text="'Venta #' + ${credito.idVenta}">#1</strong>
+                            </a>
+                        </td>
+                        <td>
+                            <strong class="text-info"
+                                    th:text="${'$' + #numbers.formatDecimal(credito.montoTotal, 0, 'COMMA', 0, 'POINT')}">
+                                $100,000
+                            </strong>
+                        </td>
+                        <td>
+                            <strong class="text-warning"
+                                    th:text="${'$' + #numbers.formatDecimal(credito.saldoPendiente, 0, 'COMMA', 0, 'POINT')}">
+                                $50,000
+                            </strong>
+                        </td>
+                        <td>
+                        <span th:if="${credito.estado == 'ACTIVO'}"
+                              class="badge bg-warning">
+                            <i class="bi bi-clock"></i> Activo
+                        </span>
+                            <span th:if="${credito.estado == 'PAGADO'}"
+                                  class="badge bg-success">
+                            <i class="bi bi-check-circle"></i> Pagado
+                        </span>
+                            <span th:if="${credito.estado == 'VENCIDO'}"
+                                  class="badge bg-danger">
+                            <i class="bi bi-exclamation-triangle"></i> Vencido
+                        </span>
+                        </td>
+                        <td class="text-center">
+                            <!-- Botón Ver -->
+                            <a th:href="@{/web/creditos/ver/{id}(id=${credito.idCredito})}"
+                               class="btn btn-sm btn-info text-white me-1"
+                               title="Ver detalle">
+                                <i class="bi bi-eye"></i>
+                            </a>
+
+                            <!-- Botón Eliminar -->
+                            <button type="button"
+                                    class="btn btn-sm btn-danger btn-eliminar"
+                                    title="Eliminar"
+                                    th:data-id="${credito.idCredito}"
+                                    th:data-cliente="${credito.nombreCliente}"
+                                    th:data-cc="${credito.idCliente}"
+                                    th:data-monto="${credito.montoTotal}"
+                                    th:data-saldo="${credito.saldoPendiente}">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Mensaje cuando no hay resultados -->
+            <div id="sinResultados" class="text-center py-5" style="display: none;">
+                <i class="bi bi-search display-1 text-muted"></i>
+                <p class="text-muted mt-3">No se encontraron créditos</p>
+            </div>
+
+            <!-- Mensaje si no hay créditos -->
+            <div th:if="${creditos.empty}" class="text-center py-5">
+                <i class="bi bi-inbox display-1 text-muted"></i>
+                <p class="text-muted mt-3">No hay créditos registrados</p>
+                <a th:href="@{/web/ventas/nueva}" class="btn btn-success mt-3">
+                    <i class="bi bi-plus-circle"></i> Crear primera venta a crédito
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de confirmación de eliminación (FUERA DE LA TABLA) -->
+    <div class="modal fade" id="modalEliminarCredito" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">
+                        <i class="bi bi-exclamation-triangle"></i> Confirmar Eliminación
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-3"><strong>¿Está seguro de que desea eliminar este crédito?</strong></p>
+                    <div class="alert alert-warning mb-3">
+                        <i class="bi bi-info-circle"></i>
+                        <div class="mt-2" id="infoCreditoEliminar">
+                            <!-- Se llenará dinámicamente -->
+                        </div>
+                    </div>
+                    <p class="text-danger mb-0">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <strong>¡Advertencia!</strong> Esta acción no se puede deshacer.
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle"></i> Cancelar
+                    </button>
+                    <form id="formEliminarCredito" method="post" style="display: inline;">
+                        <!-- Token CSRF de Thymeleaf -->
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="bi bi-trash"></i> Sí, Eliminar
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+<div th:replace="~{fragments/footer :: scripts}"></div>
+<script>
+    console.log('✅ Script de créditos cargado');
+
+    // Búsqueda en tiempo real
+    document.getElementById('buscarCredito')?.addEventListener('input', function(e) {
+        const termino = e.target.value.toLowerCase().trim();
+        const tbody = document.getElementById('tablaCreditos');
+        const filas = tbody.querySelectorAll('tr');
+        const tabla = tbody.closest('table');
+        const mensajeSinResultados = document.getElementById('sinResultados');
+        let contadorVisibles = 0;
+
+        filas.forEach(fila => {
+            const texto = fila.textContent.toLowerCase();
+            const visible = texto.includes(termino);
+            fila.style.display = visible ? '' : 'none';
+            if (visible) contadorVisibles++;
+        });
+
+        if (contadorVisibles === 0 && termino.length > 0) {
+            tabla.style.display = 'none';
+            mensajeSinResultados.style.display = 'block';
+        } else {
+            tabla.style.display = '';
+            mensajeSinResultados.style.display = 'none';
+        }
+
+        document.getElementById('totalCreditos').textContent = contadorVisibles;
+    });
+
+    // Esperar a que el DOM esté listo
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', inicializarEliminar);
+    } else {
+        inicializarEliminar();
+    }
+
+    function inicializarEliminar() {
+        console.log('🔧 Inicializando sistema de eliminación...');
+
+        const botonesEliminar = document.querySelectorAll('.btn-eliminar');
+        console.log('📊 Botones de eliminar encontrados:', botonesEliminar.length);
+
+        if (botonesEliminar.length === 0) {
+            console.warn('⚠️ No se encontraron botones de eliminar');
+            return;
+        }
+
+        const modalElement = document.getElementById('modalEliminarCredito');
+        if (!modalElement) {
+            console.error('❌ Modal no encontrado en el DOM');
+            return;
+        }
+
+        console.log('✅ Modal encontrado');
+
+        let modalInstance;
+        try {
+            modalInstance = new bootstrap.Modal(modalElement);
+            console.log('✅ Instancia de Bootstrap Modal creada');
+        } catch (error) {
+            console.error('❌ Error al crear Modal:', error);
+            return;
+        }
+
+        const formEliminar = document.getElementById('formEliminarCredito');
+        const infoCredito = document.getElementById('infoCreditoEliminar');
+
+        botonesEliminar.forEach((btn, index) => {
+            console.log(`🔘 Configurando botón ${index + 1}`);
+
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                const id = this.getAttribute('data-id');
+                const cliente = this.getAttribute('data-cliente');
+                const cc = this.getAttribute('data-cc');
+                const monto = this.getAttribute('data-monto');
+                const saldo = this.getAttribute('data-saldo');
+
+                console.log('🗑️ BOTÓN ELIMINAR CLICKEADO');
+                console.log('   ID:', id);
+                console.log('   Cliente:', cliente);
+                console.log('   CC:', cc);
+                console.log('   Monto:', monto);
+                console.log('   Saldo:', saldo);
+
+                // Actualizar información en el modal
+                infoCredito.innerHTML = `
+                    <strong>Crédito #${id}</strong><br>
+                    <strong>Cliente:</strong> ${cliente}<br>
+                    <strong>CC:</strong> ${cc}<br>
+                    <strong>Monto Total:</strong> $${parseFloat(monto).toLocaleString('es-CO')}<br>
+                    <strong>Saldo Pendiente:</strong> $${parseFloat(saldo).toLocaleString('es-CO')}
+                `;
+
+                // Actualizar action del formulario
+                formEliminar.action = `/web/creditos/eliminar/${id}`;
+
+                console.log('📝 Formulario configurado:');
+                console.log('   Action:', formEliminar.action);
+                console.log('   Method:', formEliminar.method);
+
+                // Mostrar modal
+                console.log('🎬 Intentando abrir modal...');
+                try {
+                    modalInstance.show();
+                    console.log('✅ Modal mostrado');
+                } catch (error) {
+                    console.error('❌ Error al mostrar modal:', error);
+                }
+            });
+        });
+
+        // Log cuando se envía el formulario
+        formEliminar.addEventListener('submit', function(e) {
+            console.log('==========================================');
+            console.log('📤 FORMULARIO ENVIADO');
+            console.log('   Action:', this.action);
+            console.log('   Method:', this.method);
+            console.log('   CSRF Token:', this.querySelector('input[name="_csrf"]')?.value);
+            console.log('==========================================');
+        });
+
+        console.log('✅ Sistema de eliminación inicializado correctamente');
+    }
+</script>
+</body>
+</html>

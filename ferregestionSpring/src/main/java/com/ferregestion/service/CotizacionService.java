@@ -145,4 +145,10 @@ public class CotizacionService {
                 .orElseThrow(() -> new ResourceNotFoundException("Cotización con ID " + id + " no encontrada"));
         cotizacionRepository.delete(cotizacion);
     }
+
+    public List<CotizacionResponseDTO> listarPorCliente(Integer cedula) {
+        return cotizacionRepository.findByClienteCedula(cedula).stream()
+                .map(cotizacionMapper::toResponseDTO)
+                .collect(Collectors.toList());
+    }
 }

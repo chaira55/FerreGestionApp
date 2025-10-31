@@ -1,9 +1,10 @@
 package com.ferregestion.entity;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
-import lombok.*;
-import com.fasterxml.jackson.annotation.JsonIgnore;  // NUEVO IMPORT
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 
@@ -20,28 +21,24 @@ public class Credito {
     @Column(name = "id_credito")
     private Integer idCredito;
 
-    @NotNull
-    @OneToOne
-    @JoinColumn(name = "id_venta", nullable = false, unique = true)
-    @JsonIgnore  // NUEVO: Evita el ciclo infinito
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_venta", nullable = false)
     private Venta venta;
 
-    @NotNull
-    @ManyToOne
-    @JoinColumn(name = "cedula", nullable = false)
+    // ✅ CAMBIADO: Ahora mapea a "cedula"
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "cedula", nullable = false, referencedColumnName = "cedula")
     private Cliente cliente;
 
     @Column(name = "nombre", length = 100)
     private String nombre;
 
-    @NotNull
-    @Column(name = "monto_total", nullable = false, precision = 12, scale = 2)
+    @Column(name = "monto_total", nullable = false, precision = 10, scale = 2)
     private BigDecimal montoTotal;
 
-    @NotNull
-    @Column(name = "saldo_pendiente", nullable = false, precision = 12, scale = 2)
+    @Column(name = "saldo_pendiente", nullable = false, precision = 10, scale = 2)
     private BigDecimal saldoPendiente;
 
-    @Column(name = "estado", length = 50)
+    @Column(name = "estado", nullable = false, length = 20)
     private String estado;
 }

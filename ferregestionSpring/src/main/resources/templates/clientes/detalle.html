@@ -14,14 +14,14 @@
         </ol>
     </nav>
 
-    <!-- Título y acciones -->
+    <!-- Título -->
     <div class="row mb-4">
         <div class="col-md-8">
-            <h1><i class="bi bi-person-circle"></i> Detalle del Cliente</h1>
+            <h1><i class="bi bi-person-badge"></i> Detalle del Cliente</h1>
         </div>
         <div class="col-md-4 text-end">
-            <a th:href="@{/web/clientes/editar/{cedula}(cedula=${cliente.cedula})}"
-               class="btn btn-warning">
+            <a th:href="@{/web/clientes/editar/{id}(id=${cliente.cedula})}"
+               class="btn btn-warning text-white">
                 <i class="bi bi-pencil"></i> Editar
             </a>
             <a th:href="@{/web/clientes}" class="btn btn-secondary">
@@ -30,70 +30,78 @@
         </div>
     </div>
 
-    <!-- Información del cliente -->
-    <div class="row">
+    <!-- Información del cliente y resumen -->
+    <div class="row mb-4">
         <div class="col-md-6">
             <div class="card">
                 <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0">
-                        <i class="bi bi-info-circle"></i> Información Personal
-                    </h5>
+                    <h5 class="mb-0"><i class="bi bi-info-circle"></i> Información Personal</h5>
                 </div>
                 <div class="card-body">
                     <table class="table table-borderless">
                         <tr>
                             <th width="40%">Cédula:</th>
-                            <td th:text="${cliente.cedula}">123456789</td>
+                            <td><strong th:text="${cliente.cedula}">123456789</strong></td>
                         </tr>
                         <tr>
                             <th>Nombre:</th>
                             <td th:text="${cliente.nombre}">Juan Pérez</td>
                         </tr>
                         <tr>
-                            <th><i class="bi bi-phone"></i> Celular:</th>
-                            <td th:text="${cliente.celular ?: 'No registrado'}">3001234567</td>
+                            <th>Celular:</th>
+                            <td>
+                                <a th:href="'tel:' + ${cliente.celular}" th:text="${cliente.celular}">
+                                    555-1234
+                                </a>
+                            </td>
                         </tr>
                         <tr>
-                            <th><i class="bi bi-envelope"></i> Correo:</th>
-                            <td th:text="${cliente.correo ?: 'No registrado'}">correo@ejemplo.com</td>
+                            <th>Correo:</th>
+                            <td>
+                                <a th:href="'mailto:' + ${cliente.correo}" th:text="${cliente.correo}">
+                                    juan@example.com
+                                </a>
+                            </td>
                         </tr>
                         <tr>
-                            <th><i class="bi bi-geo-alt"></i> Dirección:</th>
-                            <td th:text="${cliente.direccion ?: 'No registrada'}">Calle 123</td>
+                            <th>Dirección:</th>
+                            <td th:text="${cliente.direccion}">Calle 123 #45-67</td>
                         </tr>
                     </table>
                 </div>
             </div>
         </div>
 
+        <!-- Resumen de actividad -->
         <div class="col-md-6">
-            <div class="card">
+            <div class="card bg-light h-100">
                 <div class="card-header bg-info text-white">
-                    <h5 class="mb-0">
-                        <i class="bi bi-graph-up"></i> Estadísticas
-                    </h5>
+                    <h5 class="mb-0"><i class="bi bi-graph-up"></i> Estadísticas</h5>
                 </div>
                 <div class="card-body">
-                    <div class="row text-center">
-                        <div class="col-4">
-                            <div class="border rounded p-3 bg-light">
-                                <i class="bi bi-cart fs-2 text-primary"></i>
-                                <h3 class="mt-2" th:text="${totalCompras}">0</h3>
-                                <small class="text-muted">Compras</small>
+                    <div class="row text-center g-3">
+                        <div class="col-6">
+                            <div class="border rounded p-3 bg-white">
+                                <i class="bi bi-cart display-4 text-primary"></i>
+                                <h6 class="text-muted mb-2 mt-2">Compras</h6>
+                                <h2 class="text-primary mb-0" th:text="${totalCompras}">0</h2>
                             </div>
                         </div>
-                        <div class="col-4">
-                            <div class="border rounded p-3 bg-light">
-                                <i class="bi bi-credit-card fs-2 text-warning"></i>
-                                <h3 class="mt-2" th:text="${creditosActivos}">0</h3>
-                                <small class="text-muted">Créditos</small>
+                        <div class="col-6">
+                            <div class="border rounded p-3 bg-white">
+                                <i class="bi bi-credit-card display-4 text-warning"></i>
+                                <h6 class="text-muted mb-2 mt-2">Créditos</h6>
+                                <h2 class="text-warning mb-0" th:text="${creditosActivos}">0</h2>
                             </div>
                         </div>
-                        <div class="col-4">
-                            <div class="border rounded p-3 bg-light">
-                                <i class="bi bi-cash fs-2 text-success"></i>
-                                <h4 class="mt-2" th:text="${'$' + #numbers.formatDecimal(totalGastado, 0, 'COMMA', 0, 'POINT')}">$0</h4>
-                                <small class="text-muted">Total</small>
+                        <div class="col-12">
+                            <div class="border rounded p-3 bg-white">
+                                <i class="bi bi-cash-stack display-4 text-success"></i>
+                                <h6 class="text-muted mb-2 mt-2">Total</h6>
+                                <h3 class="text-success mb-0"
+                                    th:text="${'$' + #numbers.formatDecimal(totalGastado, 0, 'COMMA', 0, 'POINT')}">
+                                    $0
+                                </h3>
                             </div>
                         </div>
                     </div>
@@ -102,82 +110,129 @@
         </div>
     </div>
 
-    <!-- Historial de compras -->
-    <div class="row mt-4" th:if="${ventasCliente != null && !ventasCliente.empty}">
-        <div class="col-md-12">
-            <div class="card">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0">
-                        <i class="bi bi-clock-history"></i> Historial de Compras
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-striped table-hover">
-                            <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Fecha</th>
-                                <th>Total</th>
-                                <th>Tipo Pago</th>
-                                <th>Acciones</th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            <tr th:each="venta : ${ventasCliente}">
-                                <td><strong th:text="'#' + ${venta.idVenta}">#1</strong></td>
-                                <td th:text="${#temporals.format(venta.fecha, 'dd/MM/yyyy')}">21/10/2025</td>
-                                <td>
-                                    <strong class="text-success"
-                                            th:text="${'$' + #numbers.formatDecimal(venta.total, 0, 'COMMA', 0, 'POINT')}">
-                                        $195,000
-                                    </strong>
-                                </td>
-                                <td>
-                                            <span th:if="${venta.tipoPago == 'EFECTIVO'}" class="badge bg-success">
-                                                <i class="bi bi-cash"></i> Efectivo
-                                            </span>
-                                    <span th:if="${venta.tipoPago == 'TARJETA'}" class="badge bg-info">
-                                                <i class="bi bi-credit-card"></i> Tarjeta
-                                            </span>
-                                    <span th:if="${venta.tipoPago == 'CREDITO'}" class="badge bg-warning text-dark">
-                                                <i class="bi bi-clock"></i> Crédito
-                                            </span>
-                                    <span th:if="${venta.tipoPago == 'TRANSFERENCIA'}" class="badge bg-primary">
-                                                <i class="bi bi-arrow-left-right"></i> Transferencia
-                                            </span>
-                                </td>
-                                <td>
-                                    <a th:href="@{/web/ventas/ver/{id}(id=${venta.idVenta})}"
-                                       class="btn btn-sm btn-info text-white">
-                                        <i class="bi bi-eye"></i> Ver
-                                    </a>
-                                </td>
-                            </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+    <!-- ✅ HISTORIAL DE COTIZACIONES (NUEVA SECCIÓN) -->
+    <div class="card mb-4">
+        <div class="card-header bg-success text-white">
+            <h5 class="mb-0">
+                <i class="bi bi-file-text"></i> Historial de Cotizaciones
+                <span class="badge bg-light text-success ms-2" th:text="${cotizaciones.size()}">0</span>
+            </h5>
+        </div>
+        <div class="card-body">
+            <div th:if="${cotizaciones.empty}" class="text-center py-5">
+                <i class="bi bi-inbox display-1 text-muted"></i>
+                <p class="text-muted mt-3">Este cliente no tiene cotizaciones registradas</p>
+                <a th:href="@{/web/cotizaciones/nueva}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> Crear Cotización
+                </a>
+            </div>
+
+            <div th:unless="${cotizaciones.empty}" class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Nombre</th>
+                        <th>Fecha</th>
+                        <th>Total</th>
+                        <th>Productos</th>
+                        <th class="text-center">Acciones</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="cotizacion : ${cotizaciones}">
+                        <td><strong th:text="'#' + ${cotizacion.idCotizacion}">#1</strong></td>
+                        <td>
+                                <span th:if="${cotizacion.nombre != null && !cotizacion.nombre.isEmpty()}"
+                                      th:text="${cotizacion.nombre}">
+                                    Cotización ejemplo
+                                </span>
+                            <span th:unless="${cotizacion.nombre != null && !cotizacion.nombre.isEmpty()}"
+                                  class="text-muted">
+                                    Sin nombre
+                                </span>
+                        </td>
+                        <td th:text="${#temporals.format(cotizacion.fecha, 'dd/MM/yyyy')}">28/10/2025</td>
+                        <td>
+                            <strong class="text-success"
+                                    th:text="${'$' + #numbers.formatDecimal(cotizacion.total, 0, 'COMMA', 0, 'POINT')}">
+                                $50,000
+                            </strong>
+                        </td>
+                        <td>
+                                <span class="badge bg-primary"
+                                      th:text="${cotizacion.detalles != null ? cotizacion.detalles.size() : 0} + ' items'">
+                                    5 items
+                                </span>
+                        </td>
+                        <td class="text-center">
+                            <a th:href="@{/web/cotizaciones/ver/{id}(id=${cotizacion.idCotizacion})}"
+                               class="btn btn-sm btn-info text-white"
+                               title="Ver detalle">
+                                <i class="bi bi-eye"></i> Ver
+                            </a>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
 
-    <!-- Mensaje si no hay compras -->
-    <div class="row mt-4" th:if="${ventasCliente == null || ventasCliente.empty}">
-        <div class="col-md-12">
-            <div class="card">
-                <div class="card-header bg-secondary text-white">
-                    <h5 class="mb-0">
-                        <i class="bi bi-clock-history"></i> Historial de Compras
-                    </h5>
-                </div>
-                <div class="card-body text-center py-5">
-                    <i class="bi bi-cart-x fs-1 text-muted"></i>
-                    <p class="text-muted mt-3">Este cliente aún no tiene compras registradas</p>
-                    <a th:href="@{/web/ventas/nueva}" class="btn btn-primary">
-                        <i class="bi bi-plus-circle"></i> Registrar primera venta
-                    </a>
-                </div>
+    <!-- Historial de compras (ventas) -->
+    <div class="card" th:if="${ventasCliente != null && !ventasCliente.empty}">
+        <div class="card-header bg-warning text-white">
+            <h5 class="mb-0">
+                <i class="bi bi-clock-history"></i> Historial de Compras
+                <span class="badge bg-light text-warning ms-2" th:text="${ventasCliente.size()}">0</span>
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Fecha</th>
+                        <th>Total</th>
+                        <th>Tipo Pago</th>
+                        <th class="text-center">Acciones</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="venta : ${ventasCliente}">
+                        <td><strong th:text="'#' + ${venta.idVenta}">#1</strong></td>
+                        <td th:text="${#temporals.format(venta.fecha, 'dd/MM/yyyy')}">28/10/2025</td>
+                        <td>
+                            <strong class="text-success"
+                                    th:text="${'$' + #numbers.formatDecimal(venta.total, 0, 'COMMA', 0, 'POINT')}">
+                                $50,000
+                            </strong>
+                        </td>
+                        <td>
+                            <span class="badge bg-success" th:if="${venta.tipoPago == 'EFECTIVO'}">
+                                <i class="bi bi-cash"></i> Efectivo
+                            </span>
+                            <span class="badge bg-info" th:if="${venta.tipoPago == 'TARJETA'}">
+                                <i class="bi bi-credit-card"></i> Tarjeta
+                            </span>
+                            <span class="badge bg-primary" th:if="${venta.tipoPago == 'TRANSFERENCIA'}">
+                                <i class="bi bi-bank"></i> Transferencia
+                            </span>
+                            <span class="badge bg-warning" th:if="${venta.tipoPago == 'CREDITO'}">
+                                <i class="bi bi-clock"></i> Crédito
+                            </span>
+                        </td>
+                        <td class="text-center">
+                            <a th:href="@{/web/ventas/ver/{id}(id=${venta.idVenta})}"
+                               class="btn btn-sm btn-info text-white"
+                               title="Ver detalle">
+                                <i class="bi bi-eye"></i> Ver
+                            </a>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>

@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/head :: head('Detalle Cotización - FerreGestión')"></head>
+<body>
+<div th:replace="fragments/navbar :: navbar"></div>
+
+<div class="container mt-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a th:href="@{/}">Inicio</a></li>
+            <li class="breadcrumb-item"><a th:href="@{/web/cotizaciones}">Cotizaciones</a></li>
+            <li class="breadcrumb-item active">Detalle</li>
+        </ol>
+    </nav>
+
+    <!-- Título y acciones -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1>
+                <i class="bi bi-file-text"></i>
+                Cotización <span th:text="'#' + ${cotizacion.idCotizacion}">#1</span>
+            </h1>
+            <p class="text-muted" th:if="${cotizacion.nombre != null && !cotizacion.nombre.isEmpty()}"
+               th:text="${cotizacion.nombre}">
+                Nombre de la cotización
+            </p>
+        </div>
+        <div class="col-md-4 text-end">
+            <button onclick="window.print()" class="btn btn-secondary">
+                <i class="bi bi-printer"></i> Imprimir
+            </button>
+            <a th:href="@{/web/cotizaciones}" class="btn btn-primary">
+                <i class="bi bi-arrow-left"></i> Volver
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Información del cliente -->
+        <div class="col-md-6 mb-3">
+            <div class="card h-100">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-person"></i> Información del Cliente</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless mb-0">
+                        <tr>
+                            <th width="35%">Cédula:</th>
+                            <td><strong th:text="${cotizacion.cliente.cedula}">123456789</strong></td>
+                        </tr>
+                        <tr>
+                            <th>Nombre:</th>
+                            <td th:text="${cotizacion.cliente.nombre}">Juan Pérez</td>
+                        </tr>
+                        <tr th:if="${cotizacion.cliente.celular != null}">
+                            <th>Celular:</th>
+                            <td>
+                                <a th:href="'tel:' + ${cotizacion.cliente.celular}"
+                                   th:text="${cotizacion.cliente.celular}">
+                                    555-1234
+                                </a>
+                            </td>
+                        </tr>
+                        <tr th:if="${cotizacion.cliente.correo != null}">
+                            <th>Correo:</th>
+                            <td>
+                                <a th:href="'mailto:' + ${cotizacion.cliente.correo}"
+                                   th:text="${cotizacion.cliente.correo}">
+                                    cliente@email.com
+                                </a>
+                            </td>
+                        </tr>
+                        <tr th:if="${cotizacion.cliente.direccion != null}">
+                            <th>Dirección:</th>
+                            <td th:text="${cotizacion.cliente.direccion}">Calle 123 #45-67</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Información de la cotización -->
+        <div class="col-md-6 mb-3">
+            <div class="card h-100">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="bi bi-calendar"></i> Información de la Cotización</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless mb-0">
+                        <tr>
+                            <th width="35%">Número:</th>
+                            <td><strong th:text="'#' + ${cotizacion.idCotizacion}">#1</strong></td>
+                        </tr>
+                        <tr>
+                            <th>Fecha:</th>
+                            <td th:text="${#temporals.format(cotizacion.fecha, 'dd/MM/yyyy')}">28/10/2025</td>
+                        </tr>
+                        <tr>
+                            <th>Nombre:</th>
+                            <td>
+                                <span th:if="${cotizacion.nombre != null && !cotizacion.nombre.isEmpty()}"
+                                      th:text="${cotizacion.nombre}">
+                                    Cotización ejemplo
+                                </span>
+                                <span th:unless="${cotizacion.nombre != null && !cotizacion.nombre.isEmpty()}"
+                                      class="text-muted">
+                                    Sin nombre
+                                </span>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detalle de productos -->
+    <div class="card mb-3">
+        <div class="card-header bg-success text-white">
+            <h5 class="mb-0"><i class="bi bi-box-seam"></i> Detalle de Productos</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover">
+                    <thead class="table-light">
+                    <tr>
+                        <th width="10%" class="text-center">#</th>
+                        <th>Producto</th>
+                        <th width="15%" class="text-center">Cantidad</th>
+                        <th width="20%" class="text-end">Precio Unitario</th>
+                        <th width="20%" class="text-end">Subtotal</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="detalle, iterStat : ${cotizacion.detalles}">
+                        <td class="text-center" th:text="${iterStat.count}">1</td>
+                        <td>
+                            <strong th:text="${detalle.descripcionProducto}">Producto</strong>
+                            <br>
+                            <small class="text-muted">
+                                ID: <span th:text="${detalle.idProducto}">#1</span>
+                            </small>
+                        </td>
+                        <td class="text-center">
+                            <span class="badge bg-primary fs-6" th:text="${detalle.cantidad}">10</span>
+                        </td>
+                        <td class="text-end"
+                            th:text="${'$' + #numbers.formatDecimal(detalle.precioUnitario, 0, 'COMMA', 0, 'POINT')}">
+                            $5,000
+                        </td>
+                        <td class="text-end">
+                            <strong th:text="${'$' + #numbers.formatDecimal(detalle.subtotalProducto, 0, 'COMMA', 0, 'POINT')}">
+                                $50,000
+                            </strong>
+                        </td>
+                    </tr>
+                    </tbody>
+                    <tfoot class="table-light">
+                    <tr>
+                        <td colspan="4" class="text-end"><strong>TOTAL:</strong></td>
+                        <td class="text-end">
+                            <h4 class="text-success mb-0"
+                                th:text="${'$' + #numbers.formatDecimal(cotizacion.total, 0, 'COMMA', 0, 'POINT')}">
+                                $150,000
+                            </h4>
+                        </td>
+                    </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resumen estadístico -->
+    <div class="row mb-3">
+        <div class="col-md-4">
+            <div class="card text-center border-primary">
+                <div class="card-body">
+                    <h6 class="text-muted">Total de Productos</h6>
+                    <h2 class="text-primary" th:text="${cotizacion.detalles.size()}">5</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center border-info">
+                <div class="card-body">
+                    <h6 class="text-muted">Cantidad Total de Items</h6>
+                    <h2 class="text-info" th:text="${#aggregates.sum(cotizacion.detalles.![cantidad])}">25</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center border-success">
+                <div class="card-body">
+                    <h6 class="text-muted">Total Cotización</h6>
+                    <h2 class="text-success"
+                        th:text="${'$' + #numbers.formatDecimal(cotizacion.total, 0, 'COMMA', 0, 'POINT')}">
+                        $150,000
+                    </h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Acciones adicionales -->
+    <div class="text-end mb-4">
+        <a th:href="@{/web/cotizaciones/eliminar/{id}(id=${cotizacion.idCotizacion})}"
+           class="btn btn-danger"
+           onclick="return confirm('¿Está seguro de eliminar esta cotización?')">
+            <i class="bi bi-trash"></i> Eliminar Cotización
+        </a>
+    </div>
+</div>
+
+<div th:replace="fragments/footer :: footer"></div>
+<div th:replace="fragments/footer :: scripts"></div>
+
+<!-- Estilos para impresión -->
+<style>
+    @media print {
+        .navbar, .breadcrumb, .btn, footer {
+            display: none !important;
+        }
+
+        .card {
+            border: 1px solid #dee2e6 !important;
+            page-break-inside: avoid;
+        }
+
+        .card-header {
+            background-color: #f8f9fa !important;
+            color: #000 !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        body {
+            background-color: white !important;
+        }
+
+        .container {
+            max-width: 100% !important;
+            padding: 20px !important;
+        }
+    }
+</style>
+
+</body>
+</html>

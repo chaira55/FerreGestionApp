@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('Detalle Crédito - FerreGestión')}"></head>
+<body>
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="container mt-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a th:href="@{/}">Inicio</a></li>
+            <li class="breadcrumb-item"><a th:href="@{/web/creditos}">Créditos</a></li>
+            <li class="breadcrumb-item active">Detalle</li>
+        </ol>
+    </nav>
+
+    <!-- Título y acciones -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1>
+                <i class="bi bi-credit-card"></i>
+                Crédito <span th:text="'#' + ${credito.idCredito}">#1</span>
+            </h1>
+            <p class="text-muted" th:if="${credito.nombre != null && !credito.nombre.isEmpty()}"
+               th:text="${credito.nombre}">
+                Nombre del crédito
+            </p>
+        </div>
+        <div class="col-md-4 text-end">
+            <button onclick="window.print()" class="btn btn-secondary">
+                <i class="bi bi-printer"></i> Imprimir
+            </button>
+            <a th:href="@{/web/creditos/{id}/abonos(id=${credito.idCredito})}" class="btn btn-success">
+                <i class="bi bi-cash-coin"></i> Abonos
+            </a>
+            <a th:href="@{/web/creditos}" class="btn btn-primary">
+                <i class="bi bi-arrow-left"></i> Volver
+            </a>
+        </div>
+    </div>
+
+    <!-- Estado del crédito -->
+    <div class="alert"
+         th:classappend="${credito.estado == 'PAGADO'} ? 'alert-success' : (${credito.estado == 'VENCIDO'} ? 'alert-danger' : 'alert-warning')">
+        <h4 class="alert-heading">
+            <i class="bi"
+               th:classappend="${credito.estado == 'PAGADO'} ? 'bi-check-circle' : (${credito.estado == 'VENCIDO'} ? 'bi-exclamation-triangle' : 'bi-clock-history')"></i>
+            Estado: <span th:text="${credito.estado}">ACTIVO</span>
+        </h4>
+        <p class="mb-0" th:if="${credito.estado == 'ACTIVO'}">
+            Este crédito tiene un saldo pendiente de
+            <strong th:text="${'$' + #numbers.formatDecimal(credito.saldoPendiente, 0, 'COMMA', 0, 'POINT')}">$50,000</strong>
+        </p>
+        <p class="mb-0" th:if="${credito.estado == 'PAGADO'}">
+            Este crédito ha sido pagado completamente.
+        </p>
+        <p class="mb-0" th:if="${credito.estado == 'VENCIDO'}">
+            ⚠️ Este crédito está vencido. Saldo pendiente:
+            <strong th:text="${'$' + #numbers.formatDecimal(credito.saldoPendiente, 0, 'COMMA', 0, 'POINT')}">$50,000</strong>
+        </p>
+    </div>
+
+    <div class="row">
+        <!-- Información del cliente -->
+        <div class="col-md-4 mb-3">
+            <div class="card h-100">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-person"></i> Cliente</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless mb-0">
+                        <tr>
+                            <th width="40%">Cédula:</th>
+                            <td><strong th:text="${credito.idCliente}">123456789</strong></td>
+                        </tr>
+                        <tr>
+                            <th>Nombre:</th>
+                            <td th:text="${credito.nombreCliente}">Juan Pérez</td>
+                        </tr>
+                    </table>
+                    <div class="mt-3">
+                        <a th:href="@{/web/clientes/ver/{id}(id=${credito.idCliente})}"
+                           class="btn btn-sm btn-outline-primary w-100">
+                            <i class="bi bi-eye"></i> Ver cliente
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Información del crédito -->
+        <div class="col-md-4 mb-3">
+            <div class="card h-100">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="bi bi-info-circle"></i> Información</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless mb-0">
+                        <tr>
+                            <th width="40%">ID:</th>
+                            <td><strong th:text="'#' + ${credito.idCredito}">#1</strong></td>
+                        </tr>
+                        <tr>
+                            <th>Nombre:</th>
+                            <td>
+                                <span th:if="${credito.nombre != null && !credito.nombre.isEmpty()}"
+                                      th:text="${credito.nombre}">Crédito</span>
+                                <span th:unless="${credito.nombre != null && !credito.nombre.isEmpty()}"
+                                      class="text-muted">Sin nombre</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Venta:</th>
+                            <td>
+                                <a th:href="@{/web/ventas/ver/{id}(id=${credito.idVenta})}"
+                                   class="text-primary">
+                                    <strong th:text="'#' + ${credito.idVenta}">#1</strong>
+                                </a>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Estado:</th>
+                            <td>
+                                <span th:if="${credito.estado == 'ACTIVO'}" class="badge bg-warning">Activo</span>
+                                <span th:if="${credito.estado == 'PAGADO'}" class="badge bg-success">Pagado</span>
+                                <span th:if="${credito.estado == 'VENCIDO'}" class="badge bg-danger">Vencido</span>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Información financiera -->
+        <div class="col-md-4 mb-3">
+            <div class="card h-100 border-success">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="bi bi-cash-stack"></i> Resumen Financiero</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <small class="text-muted">Monto Total</small>
+                        <h3 class="text-info mb-0"
+                            th:text="${'$' + #numbers.formatDecimal(credito.montoTotal, 0, 'COMMA', 0, 'POINT')}">
+                            $100,000
+                        </h3>
+                    </div>
+                    <div class="mb-3">
+                        <small class="text-muted">Saldo Pendiente</small>
+                        <h3 class="text-warning mb-0"
+                            th:text="${'$' + #numbers.formatDecimal(credito.saldoPendiente, 0, 'COMMA', 0, 'POINT')}">
+                            $50,000
+                        </h3>
+                    </div>
+                    <hr>
+                    <div>
+                        <small class="text-muted">Monto Pagado</small>
+                        <h4 class="text-success mb-0"
+                            th:text="${'$' + #numbers.formatDecimal(credito.montoTotal - credito.saldoPendiente, 0, 'COMMA', 0, 'POINT')}">
+                            $50,000
+                        </h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Progreso del pago -->
+    <div class="card mb-3">
+        <div class="card-header bg-warning text-white">
+            <h5 class="mb-0"><i class="bi bi-graph-up"></i> Progreso de Pago</h5>
+        </div>
+        <div class="card-body">
+            <div class="row align-items-center">
+                <div class="col-md-10">
+                    <div class="progress" style="height: 30px;">
+                        <div class="progress-bar bg-success"
+                             role="progressbar"
+                             th:style="'width: ' + ${((credito.montoTotal - credito.saldoPendiente) / credito.montoTotal) * 100} + '%'"
+                             th:attr="aria-valuenow=${((credito.montoTotal - credito.saldoPendiente) / credito.montoTotal) * 100}">
+                            <strong th:text="${#numbers.formatDecimal(((credito.montoTotal - credito.saldoPendiente) / credito.montoTotal) * 100, 1, 'POINT', 0, 'POINT')} + '%'">
+                                50%
+                            </strong>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-2 text-center">
+                    <h4 class="mb-0"
+                        th:text="${#numbers.formatDecimal(((credito.montoTotal - credito.saldoPendiente) / credito.montoTotal) * 100, 1, 'POINT', 0, 'POINT')} + '%'">
+                        50%
+                    </h4>
+                    <small class="text-muted">Pagado</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+<div th:replace="~{fragments/footer :: scripts}"></div>
+
+<!-- Estilos para impresión -->
+<style>
+    @media print {
+        .navbar, .breadcrumb, .btn, footer {
+            display: none !important;
+        }
+
+        .card {
+            border: 1px solid #dee2e6 !important;
+            page-break-inside: avoid;
+        }
+
+        .card-header {
+            background-color: #f8f9fa !important;
+            color: #000 !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+    }
+</style>
+
+</body>
+</html>

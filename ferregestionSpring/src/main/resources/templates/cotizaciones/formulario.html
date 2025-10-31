@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/head :: head('Nueva Cotización - FerreGestión')"></head>
+<body>
+<div th:replace="fragments/navbar :: navbar"></div>
+
+<div class="container mt-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a th:href="@{/}">Inicio</a></li>
+            <li class="breadcrumb-item"><a th:href="@{/web/cotizaciones}">Cotizaciones</a></li>
+            <li class="breadcrumb-item active">Nueva</li>
+        </ol>
+    </nav>
+
+    <!-- Título -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1><i class="bi bi-file-earmark-plus"></i> Nueva Cotización</h1>
+        </div>
+        <div class="col-md-4 text-end">
+            <a th:href="@{/web/cotizaciones}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Volver
+            </a>
+        </div>
+    </div>
+
+    <form th:action="@{/web/cotizaciones/guardar}" method="post" id="formCotizacion">
+        <div class="row">
+            <!-- Información general -->
+            <div class="col-md-6">
+                <div class="card mb-3">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="bi bi-info-circle"></i> Información General</h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Cliente -->
+                        <div class="mb-3">
+                            <label for="cedula" class="form-label">Cliente <span class="text-danger">*</span></label>
+                            <select class="form-select" id="cedula" name="cedula" required>
+                                <option value="">Seleccione un cliente...</option>
+                                <option th:each="cliente : ${clientes}"
+                                        th:value="${cliente.cedula}"
+                                        th:text="${cliente.nombre + ' - CC: ' + cliente.cedula}">
+                                    Cliente
+                                </option>
+                            </select>
+                        </div>
+
+                        <!-- Nombre de la cotización -->
+                        <div class="mb-3">
+                            <label for="nombre" class="form-label">Nombre de la cotización</label>
+                            <input type="text"
+                                   class="form-control"
+                                   id="nombre"
+                                   name="nombre"
+                                   placeholder="Ej: Cotización materiales construcción"
+                                   maxlength="100">
+                            <small class="text-muted">Opcional - Ayuda a identificar la cotización</small>
+                        </div>
+
+                        <!-- Fecha -->
+                        <div class="mb-3">
+                            <label for="fecha" class="form-label">Fecha <span class="text-danger">*</span></label>
+                            <input type="date"
+                                   class="form-control"
+                                   id="fecha"
+                                   name="fecha"
+                                   required>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Resumen -->
+            <div class="col-md-6">
+                <div class="card mb-3 border-success">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0"><i class="bi bi-calculator"></i> Resumen</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span>Subtotal:</span>
+                            <strong id="subtotalDisplay">$0</strong>
+                        </div>
+                        <hr>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5>Total:</h5>
+                            <h4 class="text-success mb-0" id="totalDisplay">$0</h4>
+                        </div>
+                        <input type="hidden" id="total" name="total" value="0">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Productos -->
+        <div class="card mb-3">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="bi bi-box-seam"></i> Productos</h5>
+            </div>
+            <div class="card-body">
+                <!-- Selector de producto -->
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="productoSelect" class="form-label">Producto</label>
+                        <select class="form-select" id="productoSelect">
+                            <option value="">Seleccione un producto...</option>
+                            <option th:each="producto : ${productos}"
+                                    th:value="${producto.idProducto}"
+                                    th:data-descripcion="${producto.descripcion}"
+                                    th:data-precio="${producto.precioVenta}"
+                                    th:data-stock="${producto.stock}"
+                                    th:text="${producto.descripcion + ' - $' + #numbers.formatDecimal(producto.precioVenta, 0, 'COMMA', 0, 'POINT')}">
+                                Producto
+                            </option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="cantidadInput" class="form-label">Cantidad</label>
+                        <input type="number" class="form-control" id="cantidadInput" min="1" value="1">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">&nbsp;</label>
+                        <button type="button" class="btn btn-primary w-100" id="btnAgregar">
+                            <i class="bi bi-plus-circle"></i> Agregar
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Tabla de productos -->
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Producto</th>
+                                <th width="15%">Cantidad</th>
+                                <th width="20%">Precio Unit.</th>
+                                <th width="20%">Subtotal</th>
+                                <th width="10%">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaProductos">
+                            <tr id="filaVacia">
+                                <td colspan="5" class="text-center text-muted">
+                                    <i class="bi bi-inbox display-6"></i>
+                                    <p class="mb-0">No hay productos agregados</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Contenedor oculto para los campos del formulario -->
+                <div id="detallesContainer"></div>
+            </div>
+        </div>
+
+        <!-- Botones -->
+        <div class="text-end">
+            <a th:href="@{/web/cotizaciones}" class="btn btn-secondary">
+                <i class="bi bi-x-circle"></i> Cancelar
+            </a>
+            <button type="submit" class="btn btn-success" id="btnGuardar">
+                <i class="bi bi-save"></i> Guardar Cotización
+            </button>
+        </div>
+    </form>
+</div>
+
+<div th:replace="fragments/footer :: footer"></div>
+<div th:replace="fragments/footer :: scripts"></div>
+
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    let detalles = [];
+    let contadorDetalles = 0;
+
+    // Cargar fecha actual
+    document.getElementById('fecha').valueAsDate = new Date();
+
+    // Agregar producto
+    document.getElementById('btnAgregar').addEventListener('click', function() {
+        const selectProducto = document.getElementById('productoSelect');
+        const cantidad = parseInt(document.getElementById('cantidadInput').value);
+
+        if (!selectProducto.value) {
+            alert('Seleccione un producto');
+            return;
+        }
+
+        if (!cantidad || cantidad < 1) {
+            alert('Ingrese una cantidad válida');
+            return;
+        }
+
+        const option = selectProducto.options[selectProducto.selectedIndex];
+        const idProducto = parseInt(selectProducto.value);
+        const descripcion = option.getAttribute('data-descripcion');
+        const precio = parseFloat(option.getAttribute('data-precio'));
+
+        // Verificar si ya existe
+        const existe = detalles.find(d => d.idProducto === idProducto);
+        if (existe) {
+            alert('El producto ya fue agregado. Para cambiar la cantidad, elimínelo y agréguelo nuevamente.');
+            return;
+        }
+
+        // Calcular subtotal
+        const subtotal = precio * cantidad;
+
+        // Agregar a la lista
+        const detalle = {
+            id: contadorDetalles++,
+            idProducto: idProducto,
+            descripcionProducto: descripcion,
+            cantidad: cantidad,
+            precioUnitario: precio,
+            subtotalProducto: subtotal
+        };
+
+        detalles.push(detalle);
+        agregarFilaProducto(detalle);
+        actualizarCamposOcultos();
+        calcularTotal();
+
+        // Limpiar
+        selectProducto.value = '';
+        document.getElementById('cantidadInput').value = 1;
+    });
+
+    function agregarFilaProducto(detalle) {
+        document.getElementById('filaVacia')?.remove();
+
+        const tbody = document.getElementById('tablaProductos');
+        const tr = document.createElement('tr');
+        tr.id = 'detalle-' + detalle.id;
+
+        tr.innerHTML = `
+            <td>${detalle.descripcionProducto}</td>
+            <td class="text-center">${detalle.cantidad}</td>
+            <td class="text-end">$${formatearNumero(detalle.precioUnitario)}</td>
+            <td class="text-end"><strong>$${formatearNumero(detalle.subtotalProducto)}</strong></td>
+            <td class="text-center">
+                <button type="button" class="btn btn-sm btn-danger" onclick="eliminarDetalle(${detalle.id})">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </td>
+        `;
+
+        tbody.appendChild(tr);
+    }
+
+    function actualizarCamposOcultos() {
+        const container = document.getElementById('detallesContainer');
+        container.innerHTML = '';
+
+        detalles.forEach((detalle, index) => {
+            container.innerHTML += `
+                <input type="hidden" name="detalles[${index}].idProducto" value="${detalle.idProducto}">
+                <input type="hidden" name="detalles[${index}].descripcionProducto" value="${detalle.descripcionProducto}">
+                <input type="hidden" name="detalles[${index}].cantidad" value="${detalle.cantidad}">
+                <input type="hidden" name="detalles[${index}].precioUnitario" value="${detalle.precioUnitario}">
+                <input type="hidden" name="detalles[${index}].subtotalProducto" value="${detalle.subtotalProducto}">
+            `;
+        });
+    }
+
+    function eliminarDetalle(id) {
+        detalles = detalles.filter(d => d.id !== id);
+        document.getElementById('detalle-' + id).remove();
+
+        if (detalles.length === 0) {
+            const tbody = document.getElementById('tablaProductos');
+            tbody.innerHTML = `
+                <tr id="filaVacia">
+                    <td colspan="5" class="text-center text-muted">
+                        <i class="bi bi-inbox display-6"></i>
+                        <p class="mb-0">No hay productos agregados</p>
+                    </td>
+                </tr>
+            `;
+        }
+
+        actualizarCamposOcultos();
+        calcularTotal();
+    }
+
+    function calcularTotal() {
+        const total = detalles.reduce((sum, d) => sum + d.subtotalProducto, 0);
+        document.getElementById('subtotalDisplay').textContent = '$' + formatearNumero(total);
+        document.getElementById('totalDisplay').textContent = '$' + formatearNumero(total);
+        document.getElementById('total').value = total.toFixed(2);
+    }
+
+    function formatearNumero(num) {
+        return num.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    }
+
+    // Validar formulario antes de enviar
+    document.getElementById('formCotizacion').addEventListener('submit', function(e) {
+        if (detalles.length === 0) {
+            e.preventDefault();
+            alert('Debe agregar al menos un producto');
+            return false;
+        }
+
+        // Validar que el total sea mayor a 0
+        const total = parseFloat(document.getElementById('total').value);
+        if (total <= 0) {
+            e.preventDefault();
+            alert('El total debe ser mayor a 0');
+            return false;
+        }
+
+        console.log('=== ENVIANDO FORMULARIO ===');
+        console.log('Total de detalles:', detalles.length);
+        console.log('Total cotización:', total);
+        console.log('Detalles:', detalles);
+    });
+    /*]]>*/
+</script>
+</body>
+</html>

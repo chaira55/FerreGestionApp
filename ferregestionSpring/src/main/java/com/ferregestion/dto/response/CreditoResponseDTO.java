@@ -14,7 +14,8 @@ import java.math.BigDecimal;
 public class CreditoResponseDTO {
     private Integer idCredito;
     private Integer idVenta;
-    private ClienteResponseDTO cliente;
+    private Integer idCliente;
+    private String nombreCliente;
     private String nombre;
     private BigDecimal montoTotal;
     private BigDecimal saldoPendiente;
